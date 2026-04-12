@@ -255,6 +255,127 @@ Agentic RL 的评估可以从三个维度来理解：
 
 一个务实的建议：**从 BFCL 开始**。它最容易上手，评测成本最低（不需要沙箱环境），可以快速验证你的 Agent 的基础工具调用能力。等基础能力达标后，再用 SWE-bench 或 WebArena 评估端到端的任务完成能力。
 
+## Agent 评测系统设计
+
+上面列出了"用什么基准评测"。但工业界面临的更实际的问题是：**怎么搭一个评测系统**？特别是当你的 Agent 在快速迭代时，你需要一个自动化、可复现、能回归检测的评测平台。
+
+### 评测 Pipeline 架构
+
+一个完整的 Agent 评测 Pipeline 包含五个环节：
+
+```mermaid
+flowchart TD
+    T["任务集\n（JSON 配置）"] --> E["环境初始化\n（沙箱/容器）"]
+    E --> A["Agent 执行\n（自动 rollout）"]
+    A --> V["结果验证\n（规则 + LLM-Judge）"]
+    V --> R["报告生成\n（指标 + Badcase）"]
+
+    style T fill:#e3f2fd,stroke:#1976d2
+    style A fill:#fff3e0,stroke:#e65100
+    style V fill:#e8f5e9,stroke:#2e7d32
+    style R fill:#f3e5f5,stroke:#6a1b9a
+```
+
+```python
+# ==========================================
+# Agent 评测 Pipeline（简化版）
+# ==========================================
+
+class AgentEvaluationPipeline:
+    """Agent 评测流水线"""
+
+    def __init__(self, sandbox, judge_model):
+        self.sandbox = sandbox      # Docker 沙箱
+        self.judge = judge_model    # LLM-as-Judge
+
+    def run_evaluation(self, agent, task_set):
+        """运行完整评测"""
+        results = []
+
+        for task in task_set:
+            # 1. 初始化环境（每个任务独立的沙箱）
+            env = self.sandbox.create_isolated_env(task.get("setup", {}))
+
+            # 2. Agent 执行任务
+            trajectory = agent.run(task["prompt"], env, max_turns=task.get("max_turns", 20))
+
+            # 3. 结果验证
+            if task.get("verify_type") == "exact_match":
+                passed = trajectory.final_answer.strip() == task["expected_answer"].strip()
+            elif task.get("verify_type") == "execution":
+                # 代码类任务：在沙箱中执行验证脚本
+                passed = env.execute(task["verify_script"], trajectory.final_answer)
+            elif task.get("verify_type") == "llm_judge":
+                # 主观类任务：用 LLM 评估
+                passed = self.judge.evaluate(task["prompt"], trajectory.final_answer, task["rubric"])
+            else:
+                passed = False
+
+            results.append({
+                "task_id": task["id"],
+                "passed": passed,
+                "turns": trajectory.num_turns,
+                "tool_calls": trajectory.tool_calls,
+                "final_answer": trajectory.final_answer
+            })
+
+        return results
+
+    def regression_test(self, agent, baseline_results, task_set):
+        """回归测试：新模型不能退步旧能力"""
+        new_results = self.run_evaluation(agent, task_set)
+
+        regressions = []
+        for old, new in zip(baseline_results, new_results):
+            if old["passed"] and not new["passed"]:
+                regressions.append({
+                    "task_id": old["task_id"],
+                    "old_answer": old["final_answer"],
+                    "new_answer": new["final_answer"]
+                })
+
+        if regressions:
+            print(f"⚠️ 发现 {len(regressions)} 处能力退化！")
+        return regressions
+```
+
+### 自动化复测框架
+
+**确定性任务**（代码执行、API 调用、数学计算）可以直接用规则验证——答案对不对、代码能不能跑、API 调用参数对不对。这些评测是完全自动化的，不需要人工介入。
+
+**非确定性任务**（开放式问答、创意生成、多轮对话）需要用 LLM-as-Judge 评估。关键是设计好评分标准（Rubric），让 Judge 的评估可复现：
+
+```python
+RUBRIC_TEMPLATE = """
+评估标准（每项 1-5 分）：
+
+1. 准确性：回答中的事实是否正确？是否有幻觉？
+2. 完整性：是否完整回答了用户的问题？有无遗漏？
+3. 引用质量：如果有引用，是否真实可访问？是否支持论断？
+4. 效率：是否用了合理的步骤数完成任务？有无冗余操作？
+
+总分 = 各项加权平均
+"""
+```
+
+### 评测驱动训练改进
+
+评测不只是"打分"，更重要的是**把评测结果反馈到训练循环**中。完整的闭环是：
+
+```
+评测 → Badcase 分析 → 定向数据合成 → 再训练 → 再评测
+```
+
+具体来说：
+
+1. **收集失败案例**：评测中未通过的任务
+2. **归因分析**：是工具调用错了？还是推理逻辑错了？还是信息不够？
+3. **定向合成**：针对失败类型生成训练数据（参考[12.2 节轨迹合成](./trajectory-synthesis)）
+4. **训练改进**：用新数据做一轮 GRPO/PPO 训练
+5. **回归验证**：确保新模型在修复问题的同时没有退步旧能力
+
+这个闭环和[附录 B 的评测体系](/appendix_industrial_training/evaluation-badcase)是一脉相承的，只是从 LLM 评测扩展到了 Agent 评测。Agent 评测的特殊之处在于需要管理沙箱环境和工具执行状态，这使得 Pipeline 的实现复杂度更高。
+
 ## 本章总结
 
 让我们回顾第 12 章的核心收获：
@@ -282,7 +403,7 @@ Agentic RL 的评估可以从三个维度来理解：
 
 </details>
 
-到这里，我们已经覆盖了 Agentic RL 的核心理论和工程实践。下一节，我们将看到这些技术的最前沿综合应用——[深度研究智能体：Deep Research Agent](./deep-research-agent)，看看 Agentic RL 如何训练出能自主进行长程研究的 AI。
+到这里，我们已经覆盖了 Agentic RL 的核心理论和工程实践。下一节，我们来看看工业界各家的 Agentic RL 实战经验——[工业界实战：各家的 Agentic RL 都怎么做的？](./industrial-practice)，拆解 LinkedIn、Bespoke Labs、Moonshot、Alibaba 通义、Salesforce、Amazon 六家公司的训练方案、踩坑记录和关键取舍。
 
 ## 参考资料
 
@@ -298,3 +419,9 @@ Agentic RL 的评估可以从三个维度来理解：
 - Li M, et al. "[API-Bank: A Comprehensive Benchmark for Tool-Augmented LLMs](https://arxiv.org/abs/2304.08244)." EMNLP 2023. —— 工具增强 LLM 评测。
 - Qin Y, et al. "[ToolLLM: Facilitating Large Language Models to Master 16000+ Real-world APIs](https://arxiv.org/abs/2307.16789)." ICLR 2024. —— ToolBench 工具学习平台。
 - Ji H, et al. "[The Tool Decathlon](https://arxiv.org/abs/2510.25726)." arXiv:2510.25726, 2024. —— Toolathlon，多工具长时间工作流评测。
+- Zhu J, Sang H, et al. "[Unlocking Agentic RL Training for GPT-OSS: A Practical Retrospective](https://huggingface.co/blog/LinkedIn/gpt-oss-agentic-rl)." Hugging Face Blog, 2026. —— LinkedIn 团队在 GPT-OSS MoE 模型上的 Agentic RL 调试实践，包含 attention sink backward 实现。
+- Zhuang R, Vu T, et al. "[Improving Multi-Turn Tool Use with Reinforcement Learning](https://www.bespokelabs.ai/blog/improving-multi-turn-tool-use-with-reinforcement-learning)." Bespoke Labs Blog, 2025. —— GRPO 训练多轮工具调用的详细踩坑记录和稳定性 recipe。
+- Moonshot AI. "[Kimi-Researcher: End-to-End RL Training for Emerging Agentic Capabilities](https://moonshotai.github.io/Kimi-Researcher/)." 2025. —— 端到端 REINFORCE 训练自主研究智能体，包含 partial rollout 和 context management 机制。
+- Tongyi DeepResearch Team. "[Tongyi DeepResearch: From Chatbot to Autonomous Agent](https://tongyi-agent.github.io/blog/introducing-tongyi-deep-research/)." 2025. —— 三阶段 Agentic CPT → SFT → RL 管线，30B MoE 模型的 Deep Research Agent。[GitHub](https://github.com/Alibaba-NLP/DeepResearch)
+- Salesforce AI Research. "[Building Efficient RL Training for the Agentic Era](https://www.salesforce.com/blog/efficient-rl-training-agentic-era/)." 2026. —— SFR-RL 的流水线同步架构和 MoE Expert Parallelism 优化。
+- Subramanian S, Xu P, Wang Y. "[Customizing Multiturn AI Agents with Reinforcement Learning](https://www.amazon.science/blog/customizing-multiturn-ai-agents-with-reinforcement-learning)." Amazon Science Blog, 2026. —— 小数据（72 题）RL 定制 Agent 的实践，证明数据质量 > 数量。
