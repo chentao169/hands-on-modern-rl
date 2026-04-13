@@ -51,11 +51,14 @@ const siteUrl = process.env.SITE_URL || `https://${owner}.github.io/${repo}`
 const editLinkPattern = `https://github.com/${owner}/${repo}/edit/main/docs/:path`
 
 const zhNav = [
-  { text: '写在开头', link: '/preface/intro' },
-  { text: '极速入门', link: '/chapter01_cartpole/intro' },
-  { text: '理论与方法', link: '/chapter03_mdp/intro' },
-  { text: 'LLM时代', link: '/chapter07_alignment/intro' },
-  { text: '进阶应用与前沿', link: '/chapter09_continuous_control/intro' }
+  { text: '前言与导论', link: '/preface/intro' },
+  { text: '基础导论', link: '/chapter01_cartpole/intro' },
+  { text: '核心理论与方法', link: '/chapter03_mdp/intro' },
+  { text: '大模型强化学习', link: '/chapter07_alignment/intro' },
+  {
+    text: '前沿与进阶专题',
+    link: '/chapter09_continuous_control/intro'
+  }
 ]
 
 const enNav = [
@@ -83,7 +86,7 @@ const zhSidebar = {
       ]
     },
     {
-      text: 'Part 1: 极速入门',
+      text: '第一篇：基础导论',
       items: [
         {
           text: '第1章：RL初印象',
@@ -103,11 +106,11 @@ const zhSidebar = {
             { text: '训练与指标', link: '/chapter02_dpo/metrics' }
           ]
         },
-        { text: 'Part 1 总结', link: '/summaries/part1-summary' }
+        { text: '第一篇总结', link: '/summaries/part1-summary' }
       ]
     },
     {
-      text: 'Part 2: 理论与方法',
+      text: '第二篇：核心理论与方法',
       items: [
         {
           text: '第3章：MDP 与大模型语境',
@@ -200,11 +203,11 @@ const zhSidebar = {
             }
           ]
         },
-        { text: 'Part 2 总结', link: '/summaries/part2-summary' }
+        { text: '第二篇总结', link: '/summaries/part2-summary' }
       ]
     },
     {
-      text: 'Part 3: LLM 时代',
+      text: '第三篇：大模型强化学习',
       items: [
         {
           text: '第7章：对齐方法族（DPO / KTO / SimPO）',
@@ -248,11 +251,11 @@ const zhSidebar = {
             }
           ]
         },
-        { text: 'Part 3 总结', link: '/summaries/part3-summary' }
+        { text: '第三篇总结', link: '/summaries/part3-summary' }
       ]
     },
     {
-      text: 'Part 4: 进阶与前沿',
+      text: '第四篇：前沿与进阶专题',
       items: [
         {
           text: '第9章：连续动作控制 (SAC/TD3)',
@@ -405,7 +408,7 @@ const zhSidebar = {
             }
           ]
         },
-        { text: 'Part 4 总结', link: '/summaries/part4-summary' }
+        { text: '第四篇总结', link: '/summaries/part4-summary' }
       ]
     },
     {
@@ -490,8 +493,14 @@ const zhSidebar = {
           items: [
             { text: '章节导览', link: '/appendix_math/intro' },
             { text: 'E.1 线性代数', link: '/appendix_math/linear-algebra' },
-            { text: 'E.2 概率与统计', link: '/appendix_math/probability-statistics' },
-            { text: 'E.3 微积分与优化', link: '/appendix_math/calculus-optimization' },
+            {
+              text: 'E.2 概率与统计',
+              link: '/appendix_math/probability-statistics'
+            },
+            {
+              text: 'E.3 微积分与优化',
+              link: '/appendix_math/calculus-optimization'
+            },
             { text: 'E.4 信息论', link: '/appendix_math/information-theory' }
           ]
         },
