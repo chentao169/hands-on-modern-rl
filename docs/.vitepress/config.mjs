@@ -247,6 +247,10 @@ const zhSidebar = {
             {
               text: 'RL Scaling 与前沿展望',
               link: '/chapter08_grpo_rlvr/rl-scaling-outlook'
+            },
+            {
+              text: '知识蒸馏与在线策略蒸馏',
+              link: '/chapter08_grpo_rlvr/on-policy-distillation'
             }
           ]
         },

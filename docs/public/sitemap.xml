@@ -373,8 +373,14 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://walkinglabs.github.io/hands-on-modern-rl/chapter08_grpo_rlvr/on-policy-distillation/</loc>
+    <lastmod>2026-04-15T02:32:17.165Z</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://walkinglabs.github.io/hands-on-modern-rl/chapter08_grpo_rlvr/rl-scaling-outlook/</loc>
-    <lastmod>2026-04-12T16:43:40.881Z</lastmod>
+    <lastmod>2026-04-15T01:54:13.487Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
