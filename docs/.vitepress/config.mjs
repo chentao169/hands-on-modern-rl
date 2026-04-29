@@ -203,8 +203,10 @@ function mathInline(state, silent) {
   }
 
   const start = state.pos + 1
+  const max = state.posMax
   let match = start
   while ((match = state.src.indexOf('$', match)) !== -1) {
+    if (match >= max) { match = -1; break }
     let pos = match - 1
     while (state.src[pos] === '\\') pos -= 1
     if ((match - pos) % 2 === 1) break
@@ -296,8 +298,49 @@ function renderKatex(content, displayMode) {
   })
 }
 
+function rescueMathInInline(md) {
+  md.core.ruler.push('math_inline_rescue', function (state) {
+    for (let i = 0; i < state.tokens.length; i++) {
+      const token = state.tokens[i]
+      if (token.type !== 'inline' || !token.children) continue
+
+      let needsRescue = false
+      for (const child of token.children) {
+        if (child.type === 'text' && /\$[^$]+\$/.test(child.content)) {
+          needsRescue = true
+          break
+        }
+      }
+      if (!needsRescue) continue
+
+      const newChildren = []
+      for (const child of token.children) {
+        if (child.type === 'text' && child.content.includes('$')) {
+          const parts = child.content.split(/(\$[^$]+\$)/)
+          for (const part of parts) {
+            if (!part) continue
+            if (part.startsWith('$') && part.endsWith('$') && part.length > 2) {
+              const t = new state.Token('math_inline', 'math', 0)
+              t.content = part.slice(1, -1)
+              t.markup = '$'
+              newChildren.push(t)
+            } else {
+              const t = new state.Token('text', '', 0)
+              t.content = part
+              newChildren.push(t)
+            }
+          }
+        } else {
+          newChildren.push(child)
+        }
+      }
+      token.children = newChildren
+    }
+  })
+}
+
 function katexMarkdown(md) {
-  md.inline.ruler.after('escape', 'math_inline', mathInline)
+  md.inline.ruler.before('text', 'math_inline', mathInline)
   md.block.ruler.after('blockquote', 'math_block', mathBlock, {
     alt: ['paragraph', 'reference', 'blockquote', 'list']
   })
@@ -305,6 +348,7 @@ function katexMarkdown(md) {
     renderKatex(tokens[idx].content, false)
   md.renderer.rules.math_block = (tokens, idx) =>
     `<p>${renderKatex(tokens[idx].content, true)}</p>\n`
+  rescueMathInInline(md)
 }
 
 function safeHeadingAttrs(md) {
@@ -465,11 +509,7 @@ const zhSidebar = {
             },
             { text: '4.5 Double、Dueling 与 Rainbow', link: '/chapter04_dqn/dqn-family' },
             {
-              text: '4.6 动手：DQN 玩 CartPole',
-              link: '/chapter04_dqn/cartpole-dqn'
-            },
-            {
-              text: '4.7 项目：DQN 视觉游戏扩展',
+              text: '4.6 项目：DQN 实战与视觉游戏',
               link: '/chapter04_dqn/visual-game-projects'
             }
           ]
@@ -522,20 +562,20 @@ const zhSidebar = {
           collapsed: false,
           items: [
             {
-              text: '7.1 PPO 数学推导',
+              text: '7.1 动手：PPO 训练 LunarLander',
+              link: '/chapter06_ppo/ppo-lunar-lander'
+            },
+            {
+              text: '7.2 PPO 数学推导',
               link: '/chapter06_ppo/ppo-math'
             },
             {
-              text: '7.2 信任域与裁剪',
+              text: '7.3 信任域与裁剪',
               link: '/chapter06_ppo/trust-region-clipping'
             },
             {
-              text: '7.3 GAE 与奖励模型',
+              text: '7.4 GAE 与奖励模型',
               link: '/chapter06_ppo/gae-reward-model'
-            },
-            {
-              text: '7.4 动手：PPO 训练 LunarLander',
-              link: '/chapter06_ppo/ppo-lunar-lander'
             }
           ]
         },
@@ -662,82 +702,43 @@ const zhSidebar = {
           collapsed: false,
           items: [
             {
-              text: '11.1 视觉奖励与幻觉',
+              text: '11.1 动手：GRPO 训练 VLM',
+              link: '/chapter11_vlm_rl/vlm-grpo-hands-on'
+            },
+            {
+              text: '11.2 视觉奖励与幻觉',
               link: '/chapter11_vlm_rl/vlm-challenges'
             },
             {
-              text: '11.2 Open-R1、R1-V 与 VLM-R1',
+              text: '11.3 Open-R1、R1-V 与 VLM-R1',
               link: '/chapter11_vlm_rl/vlm-frameworks'
             },
             {
-              text: '11.3 视觉生成 RL',
+              text: '11.4 视觉生成 RL',
               link: '/chapter11_vlm_rl/visual-generation-rl'
-            },
-            {
-              text: '11.4 动手：GRPO 训练 VLM',
-              link: '/chapter11_vlm_rl/vlm-grpo-hands-on'
             }
           ]
         },
         {
-          text: '12. 连续控制',
-          link: '/chapter09_continuous_control/intro',
-          collapsed: false,
-          items: [
-            {
-              text: '12.1 DDPG 与 TD3',
-              link: '/chapter09_continuous_control/continuous-policy-ddpg-td3'
-            },
-            {
-              text: '12.2 SAC、PPO 与 TD3 对比',
-              link: '/chapter09_continuous_control/sac-comparison'
-            },
-            {
-              text: '12.3 HER',
-              link: '/chapter09_continuous_control/her-sparse-reward'
-            },
-            {
-              text: '12.4 扩散策略',
-              link: '/chapter09_continuous_control/diffusion-policy'
-            },
-            {
-              text: '12.5 Sim-to-Real',
-              link: '/chapter09_continuous_control/embodied-intelligence'
-            },
-            {
-              text: '12.6 项目：PyBullet 机器人仿真',
-              link: '/chapter09_continuous_control/pybullet-hands-on'
-            }
-          ]
-        },
-        {
-          text: '13. 未来趋势',
+          text: '12. 未来趋势',
           link: '/chapter13_future_trends/intro',
           collapsed: false,
           items: [
             {
-              text: '13.1 Test-Time Scaling',
-              link: '/chapter13_future_trends/test-time-reasoning'
+              text: '12.1 具身智能',
+              link: '/chapter13_future_trends/embodied-intelligence/'
             },
             {
-              text: '13.2 多智能体与模型基 RL',
-              link: '/chapter13_future_trends/marl-model-based'
-            },
-            {
-              text: '13.3 Self-Play 与自进化',
+              text: '12.2 Self-Play 与自进化',
               link: '/chapter13_future_trends/self-play-outlook'
             },
             {
-              text: '13.4 LLM 多智能体 RL',
+              text: '12.3 LLM 多智能体 RL',
               link: '/chapter13_future_trends/llm-multi-agent-rl'
             },
             {
-              text: '13.5 离线强化学习',
+              text: '12.4 离线强化学习',
               link: '/chapter13_future_trends/offline-rl'
-            },
-            {
-              text: '13.6 动手：PettingZoo',
-              link: '/chapter13_future_trends/pettingzoo'
             }
           ]
         },
