@@ -4,6 +4,14 @@
 
 这个实验的核心区别在于输入：纯文本 GRPO 的输入是一串 token，而 VLM GRPO 的输入是**视觉 token（图像编码）+ 文本 token（问题）**。奖励函数和优化算法本身没有变化——GRPO 的核心代码完全一样，只是模型的输入多了一个图像维度。
 
+![VLM-R1 IoU Reward Curve](./images/ref-vlm-r1-iou.png)
+
+<div style="text-align: center; font-size: 0.9em; color: var(--vp-c-text-2); margin-top: -10px; margin-bottom: 20px;">
+  <em>图 1：VLM-R1 训练日志中的 IoU reward 曲线。它把视觉 grounding 的质量转成可优化的奖励信号，和本节“规则奖励 + GRPO”的动手实验是同一类训练思路。来源：<a href="https://github.com/om-ai-lab/VLM-R1" target="_blank" rel="noopener noreferrer">VLM-R1 GitHub</a></em>
+</div>
+
+这张图的价值不在于曲线本身有多漂亮，而在于它提醒我们：VLM RL 不是“给图片加几个 token”这么简单。只要 reward 能刻画视觉 grounding，GRPO 就可以把“看对哪里”这件事变成可优化的训练信号。下面的几何图形计数实验，就是这个思想的最小版本。
+
 ## 11.1.1 数据集：几何图形计数
 
 我们选择一个简单的视觉问答任务——几何图形计数。这个任务的好处是有客观标准答案，可以用规则奖励来评估，不需要训练额外的 RM。
@@ -239,3 +247,7 @@ VLM 包含两个组件——视觉编码器（ViT）和文本解码器（Transfo
 </details>
 
 这个实验虽然简单，但展示了 VLM RL 的核心流程：和纯文本 RL 的算法完全一样（GRPO），但输入多了图像，奖励评估需要考虑视觉理解的维度。接下来我们要深入讨论的是，当输入从纯文本变成"图像 + 文本"时，会出现哪些纯文本场景中根本不存在的新挑战——[VLM RL 的特殊挑战](./vlm-challenges)。
+
+## 参考资料
+
+- [VLM-R1 GitHub](https://github.com/om-ai-lab/VLM-R1) —— 提供了 VLM-R1 的训练曲线、grounding reward 示例与开源实现，可作为本节实验的真实项目参照。
