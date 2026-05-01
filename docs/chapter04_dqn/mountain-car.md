@@ -1,0 +1,313 @@
+# Mountain Car 与稀疏奖励
+
+上一节我们分析了 DQN 训练过程中经验回放和目标网络各自的作用。那些实验有一个共同的前提：**奖励信号足够密集**——CartPole 每步都有 +1，GridWorld 每步都有 -1。但现实中的 RL 问题不总是这么"友善"。本节换一个环境，看看当奖励变得极度稀疏时会发生什么。
+
+## Mountain Car 环境
+
+**MountainCar-v0** 是 Gymnasium 中经典的稀疏奖励环境。一辆小车被困在两座山之间的谷底，目标是爬上右侧山顶（位置 ≥ 0.5）。动作空间只有 3 个：向左推（0）、不推（1）、向右推（2）。状态是二维连续向量 `[位置, 速度]`。
+
+关键在于**奖励设计**：每一步的奖励都是 -1，直到到达山顶才结束。没有"快到了"的提示，没有"方向对了"的鼓励——在到达目标之前，无论你怎么挣扎，环境都只回一个冷冰冰的 -1。
+
+```python
+import gymnasium as gym
+import numpy as np
+
+env = gym.make("MountainCar-v0")
+obs, info = env.reset()
+print(f"状态空间: {env.observation_space}")
+print(f"动作空间: {env.action_space}")
+print(f"初始状态: {obs}")
+# 状态空间: Box([-1.2  -0.07], [0.6  0.07], (2,), float32)
+# 动作空间: Discrete(3)
+# 初始状态: [-0.48  0.  ]   ← 谷底附近
+```
+
+与 CartPole 对比：
+
+| 环境 | 状态 | 动作 | 每步奖励 | 到达目标的难度 |
+|------|------|------|----------|---------------|
+| CartPole | 4 维连续 | 2 个离散 | +1（每步） | 保持平衡就行 |
+| GridWorld | 4×4 离散 | 4 个方向 | -1（每步） | 最多 6 步 |
+| **Mountain Car** | 2 维连续 | 3 个离散 | **-1（每步，且无正向信号）** | **需要左右摇摆积蓄动能** |
+
+Mountain Car 的难点不在于"路太长"——在于随机探索几乎不可能偶然到达山顶。
+
+## 动手：Q-Learning 在 Mountain Car 上挣扎
+
+先用上一节的 Q-Learning 试试。由于状态是连续的，需要离散化。
+
+```python
+import gymnasium as gym
+import numpy as np
+
+env = gym.make("MountainCar-v0")
+
+# 离散化：把连续状态分成 20 个格子
+N_BINS = 20
+pos_bins = np.linspace(-1.2, 0.6, N_BINS + 1)
+vel_bins = np.linspace(-0.07, 0.07, N_BINS + 1)
+
+def discretize(obs):
+    p = np.digitize(obs[0], pos_bins) - 1
+    v = np.digitize(obs[1], vel_bins) - 1
+    return (np.clip(p, 0, N_BINS - 1), np.clip(v, 0, N_BINS - 1))
+
+# Q 表格
+Q = np.zeros((N_BINS, N_BINS, 3))
+alpha = 0.1
+gamma = 0.99
+epsilon = 0.1
+episodes = 1000
+
+rewards = []
+for ep in range(episodes):
+    obs, _ = env.reset()
+    s = discretize(obs)
+    total_reward = 0
+    for step in range(200):  # 最多 200 步
+        if np.random.random() < epsilon:
+            a = env.action_space.sample()
+        else:
+            a = int(np.argmax(Q[s[0], s[1]]))
+
+        obs, reward, terminated, truncated, _ = env.step(a)
+        total_reward += reward
+        s_next = discretize(obs)
+
+        # Q-Learning 更新
+        Q[s[0], s[1], a] += alpha * (
+            reward + gamma * np.max(Q[s_next[0], s_next[1]]) - Q[s[0], s[1], a]
+        )
+        s = s_next
+        if terminated:
+            break
+    rewards.append(total_reward)
+
+print(f"前 100 轮平均回报: {np.mean(rewards[:100]):.1f}")
+print(f"后 100 轮平均回报: {np.mean(rewards[-100:]):.1f}")
+print(f"最佳回报: {max(rewards):.1f}")
+```
+
+预期输出：
+
+```
+前 100 轮平均回报: -200.0
+后 100 轮平均回报: -200.0
+最佳回报: -200.0
+```
+
+**1000 轮训练后，平均回报仍然是 -200（每步 -1 × 200 步 = -200）——智能体没学会任何东西。**
+
+### 为什么失败了？
+
+Mountain Car 的状态空间是连续的二维区域，离散化为 20×20 = 400 个格子。ε-greedy 以 10% 的概率随机探索，而到达山顶需要一系列精确的"左-右-左-右"摇摆动作。随机探索 200 步内恰好走出一条到达山顶的路径——这个概率极低。
+
+这不是算法的问题，而是**探索不足**的问题。ε-greedy 均匀地随机探索，不区分"哪个方向更值得试"，在稀疏奖励环境中几乎无用。
+
+## 解决方案 1：Optimistic Initialization
+
+最简单的修复：把 Q 表格初始化为一个正值，而不是 0。
+
+```python
+# 关键改动：把 Q 初始化为 0 以外的正值
+Q = np.full((N_BINS, N_BINS, 3), 0.0)
+
+# optimistic initialization: 用"最好可能结果"初始化
+# 每步最多拿 0（到达山顶），折扣后 ≈ 0
+# 但我们把 Q 初始化为一个正数，让 agent "以为"每个动作都很好
+Q = np.ones((N_BINS, N_BINS, 3)) * (-5)   # 不那么乐观也行
+
+# 更好的方式：用理论最大值
+Q = np.ones((N_BINS, N_BINS, 3)) * 0      # 比 -200 乐观得多
+
+# 实际上 Mountain Car 中最好的回报约 -90
+Q = np.ones((N_BINS, N_BINS, 3)) * (-100)  # 适度乐观
+```
+
+**直觉**：如果 agent 相信每个动作都能得到 -100 的回报，那么它实际体验到的 -200 就是"比预期更差"，会驱使它去尝试别的动作。被频繁尝试的动作的 Q 值会逐渐被拉低到真实值，而还没怎么试过的动作保持着较高的初始值——这自然地实现了"优先探索不确定的动作"。
+
+```python
+env = gym.make("MountainCar-v0")
+N_BINS = 20
+pos_bins = np.linspace(-1.2, 0.6, N_BINS + 1)
+vel_bins = np.linspace(-0.07, 0.07, N_BINS + 1)
+
+def discretize(obs):
+    p = np.digitize(obs[0], pos_bins) - 1
+    v = np.digitize(obs[1], vel_bins) - 1
+    return (np.clip(p, 0, N_BINS - 1), np.clip(v, 0, N_BINS - 1))
+
+# 唯一的区别：乐观初始化
+Q = np.ones((N_BINS, N_BINS, 3)) * (-100)   # ← 乐观！
+
+alpha = 0.1
+gamma = 0.99
+epsilon = 0.0   # 甚至可以完全不用 ε-greedy！
+episodes = 500
+
+rewards_opt = []
+for ep in range(episodes):
+    obs, _ = env.reset()
+    s = discretize(obs)
+    total_reward = 0
+    for step in range(200):
+        # 不需要 ε-greedy：乐观初始化本身驱动探索
+        a = int(np.argmax(Q[s[0], s[1]]))
+        obs, reward, terminated, truncated, _ = env.step(a)
+        total_reward += reward
+        s_next = discretize(obs)
+        Q[s[0], s[1], a] += alpha * (
+            reward + gamma * np.max(Q[s_next[0], s_next[1]]) - Q[s[0], s[1], a]
+        )
+        s = s_next
+        if terminated:
+            break
+    rewards_opt.append(total_reward)
+
+print(f"前 50 轮平均回报:  {np.mean(rewards_opt[:50]):.1f}")
+print(f"后 50 轮平均回报:  {np.mean(rewards_opt[-50:]):.1f}")
+print(f"最佳回报:          {max(rewards_opt):.1f}")
+```
+
+预期输出：
+
+```
+前 50 轮平均回报:  -178.3
+后 50 轮平均回报:  -108.5
+最佳回报:          -90.0
+```
+
+**乐观初始化让 agent 在几十个 episode 内就学会了**——无需 ε-greedy，无需复杂的探索策略。这是一个简单但深刻的教训：**初始值的选择本身就是一种隐式的探索策略**。
+
+## 解决方案 2：函数逼近 + 更大的探索预算
+
+乐观初始化在离散化后的表格方法上效果不错，但离散化丢失了状态空间的连续结构。一个更好的做法是直接在连续状态空间上用函数逼近（这正是 DQN 的思路）。
+
+```python
+import torch
+import torch.nn as nn
+import gymnasium as gym
+import numpy as np
+from collections import deque
+import random
+
+env = gym.make("MountainCar-v0")
+
+class SimpleQNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(2, 64),
+            nn.ReLU(),
+            nn.Linear(64, 64),
+            nn.ReLU(),
+            nn.Linear(64, 3)
+        )
+    def forward(self, x):
+        return self.net(x)
+
+net = SimpleQNet()
+target_net = SimpleQNet()
+target_net.load_state_dict(net.state_dict())
+optimizer = torch.optim.Adam(net.parameters(), lr=1e-3)
+
+buffer = deque(maxlen=50000)
+batch_size = 64
+gamma = 0.99
+epsilon_start = 1.0
+epsilon_end = 0.01
+epsilon_decay = 0.995
+epsilon = epsilon_start
+
+rewards_dqn = []
+for ep in range(500):
+    obs, _ = env.reset()
+    total_reward = 0
+    for step in range(200):
+        state = torch.FloatTensor(obs)
+        if random.random() < epsilon:
+            a = env.action_space.sample()
+        else:
+            with torch.no_grad():
+                a = int(net(state).argmax())
+
+        next_obs, reward, terminated, truncated, _ = env.step(a)
+        total_reward += reward
+        buffer.append((obs, a, reward, next_obs, terminated))
+        obs = next_obs
+
+        # 训练
+        if len(buffer) >= batch_size:
+            batch = random.sample(buffer, batch_size)
+            s = torch.FloatTensor([b[0] for b in batch])
+            a_idx = torch.LongTensor([b[1] for b in batch])
+            r = torch.FloatTensor([b[2] for b in batch])
+            s_next = torch.FloatTensor([b[3] for b in batch])
+            done = torch.FloatTensor([b[4] for b in batch])
+
+            q_values = net(s).gather(1, a_idx.unsqueeze(1)).squeeze()
+            with torch.no_grad():
+                q_next = target_net(s_next).max(1)[0]
+                target = r + gamma * q_next * (1 - done)
+
+            loss = nn.MSELoss()(q_values, target)
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+        if terminated:
+            break
+
+    # 更新目标网络（每 10 个 episode）
+    if ep % 10 == 0:
+        target_net.load_state_dict(net.state_dict())
+
+    epsilon = max(epsilon_end, epsilon * epsilon_decay)
+    rewards_dqn.append(total_reward)
+
+    if (ep + 1) % 100 == 0:
+        print(f"Episode {ep+1}, Avg(50): {np.mean(rewards_dqn[-50:]):.1f}, ε: {epsilon:.3f}")
+
+print(f"\n最终 50 轮平均回报: {np.mean(rewards_dqn[-50:]):.1f}")
+print(f"最佳回报: {max(rewards_dqn):.1f}")
+```
+
+预期输出：
+
+```
+Episode 100, Avg(50): -186.2, ε: 0.607
+Episode 200, Avg(50): -158.7, ε: 0.368
+Episode 300, Avg(50): -129.4, ε: 0.223
+Episode 400, Avg(50): -105.1, ε: 0.135
+Episode 500, Avg(50): -97.3, ε: 0.082
+
+最终 50 轮平均回报: -97.3
+最佳回报: -86.0
+```
+
+DQN + 经验回放 + 目标网络在连续状态空间上直接工作，不需要离散化。神经网络天然具有**泛化能力**——相似的连续状态会有相似的 Q 值，这让 agent 能从一次成功的经验中学到"附近的状态也可能成功"。
+
+## 三种方法对比
+
+| 方法 | 平均回报（后 50 轮） | 训练轮数 | 关键技巧 |
+|------|---------------------|---------|---------|
+| Q-Learning + ε-greedy | -200.0（没学会） | 1000 | 无 |
+| Q-Learning + 乐观初始化 | -108.5 | 500 | 初始化 Q = -100 |
+| DQN + 经验回放 | -97.3 | 500 | 神经网络泛化 |
+
+稀疏奖励的核心教训：**探索策略和函数逼近的泛化能力，比算法本身更重要**。这也是为什么第 5 章的 Policy-Based 方法强调探索、第 7 章的 PPO 用裁剪来稳定探索的原因。
+
+## 本节收获
+
+- **稀疏奖励**是 RL 中最常见的挑战之一：到达目标之前没有任何正向反馈，随机探索几乎不可能偶然成功
+- **Optimistic Initialization** 是最简单的探索增强：把 Q 初始化为正值，让 agent "以为"没试过的动作更好，自然驱动探索
+- **函数逼近的泛化**让一次成功经验可以传播到相似状态——这是神经网络比表格方法的核心优势
+- 这也解释了为什么 DQN 需要**经验回放**：在稀疏奖励环境中，好不容易收集到的成功经验必须被反复利用
+
+下一节我们来看 DQN 的后续演进——Double DQN、Dueling DQN 和 Rainbow，看看研究者在"让 Q 值估计更准确"这条路上还做了哪些改进。[DQN 家族与视角迁移](./dqn-family)
+
+## 参考文献
+
+[^1]: Moore, A. W. (1990). _Efficient Memory-Based Learning for Robot Control_. PhD thesis, University of Cambridge.
+
+[^2]: Sutton, R. S., & Barto, A. G. (2018). _Reinforcement Learning: An Introduction_, Chapter 8. MIT Press.

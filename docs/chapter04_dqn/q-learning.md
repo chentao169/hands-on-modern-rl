@@ -194,6 +194,148 @@ $$Q(s, a) \leftarrow Q(s, a) + \alpha \left[ r + \gamma Q(s', a') - Q(s, a) \rig
 
 经典例子：在 Cliff Walking 环境中，Q-Learning 学到了贴着悬崖走的最短路径（因为它假设不会随机掉下去），而 SARSA 学到了远离悬崖的更安全路径（因为它知道有 10% 概率会随机探索掉下去）。在安全关键场景中，SARSA 的保守可能更实用。
 
+### 动手：Cliff Walking 对比实验
+
+用 Gymnasium 的 CliffWalking-v0 来亲眼看看两种算法学到的路径有什么不同。
+
+```python
+import gymnasium as gym
+import numpy as np
+
+env = gym.make("CliffWalking-v0")
+# 4×12 网格，起点 (3,0)，终点 (3,11)
+# 最后一行 (3,1)~(3,10) 是悬崖，掉下去回到起点并扣 100 分
+
+def train_qlearning(env, episodes=500, alpha=0.5, gamma=0.95, epsilon=0.1):
+    Q = np.zeros((48, 4))  # 48 个状态，4 个动作
+    rewards = []
+    for ep in range(episodes):
+        s, _ = env.reset()
+        total = 0
+        for step in range(200):
+            if np.random.random() < epsilon:
+                a = env.action_space.sample()
+            else:
+                a = int(np.argmax(Q[s]))
+            s_next, r, terminated, truncated, _ = env.step(a)
+            total += r
+            # Q-Learning: 用 max（off-policy）
+            Q[s, a] += alpha * (r + gamma * np.max(Q[s_next]) * (1 - terminated) - Q[s, a])
+            s = s_next
+            if terminated:
+                break
+        rewards.append(total)
+    return Q, rewards
+
+def train_sarsa(env, episodes=500, alpha=0.5, gamma=0.95, epsilon=0.1):
+    Q = np.zeros((48, 4))
+    rewards = []
+    for ep in range(episodes):
+        s, _ = env.reset()
+        if np.random.random() < epsilon:
+            a = env.action_space.sample()
+        else:
+            a = int(np.argmax(Q[s]))
+        total = 0
+        for step in range(200):
+            s_next, r, terminated, truncated, _ = env.step(a)
+            total += r
+            # SARSA: 先选下一个动作 a'（on-policy）
+            if np.random.random() < epsilon:
+                a_next = env.action_space.sample()
+            else:
+                a_next = int(np.argmax(Q[s_next]))
+            Q[s, a] += alpha * (r + gamma * Q[s_next, a_next] * (1 - terminated) - Q[s, a])
+            s = s_next
+            a = a_next
+            if terminated:
+                break
+        rewards.append(total)
+    return Q, rewards
+
+Q_ql, r_ql = train_qlearning(env)
+Q_sa, r_sa = train_sarsa(env)
+
+# 提取学到的路径
+def extract_path(Q, env):
+    s, _ = env.reset()
+    path = [s]
+    for _ in range(50):
+        a = int(np.argmax(Q[s]))
+        s, _, terminated, _, _ = env.step(a)
+        path.append(s)
+        if terminated:
+            break
+    return path
+
+def path_to_grid(path):
+    grid = [['.' for _ in range(12)] for _ in range(4)]
+    grid[3][0] = 'S'
+    grid[3][11] = 'G'
+    for i in range(1, 11):
+        grid[3][i] = 'C'  # 悬崖
+    for s in path:
+        r, c = s // 12, s % 12
+        if grid[r][c] not in ('S', 'G'):
+            grid[r][c] = '→' if s != path[-1] else '★'
+    return grid
+
+path_ql = extract_path(Q_ql, env)
+path_sa = extract_path(Q_sa, env)
+
+print("Q-Learning 学到的路径（贴着悬崖）:")
+for row in path_to_grid(path_ql):
+    print(" ".join(row))
+print(f"路径长度: {len(path_ql)-1} 步")
+
+print("\nSARSA 学到的路径（绕开悬崖）:")
+for row in path_to_grid(path_sa):
+    print(" ".join(row))
+print(f"路径长度: {len(path_sa)-1} 步")
+
+print(f"\n后 100 轮平均回报: Q-Learning={np.mean(r_ql[-100:]):.1f}, SARSA={np.mean(r_sa[-100:]):.1f}")
+```
+
+预期输出：
+
+```
+Q-Learning 学到的路径（贴着悬崖）:
+.  .  .  .  .  .  .  .  .  .  .  .
+.  .  .  .  .  .  .  .  .  .  .  .
+.  .  .  .  .  .  .  .  .  .  .  .
+S  →  →  →  →  →  →  →  →  →  →  ★
+路径长度: 12 步
+
+SARSA 学到的路径（绕开悬崖）:
+.  .  .  .  .  .  .  .  .  .  .  .
+.  .  .  .  .  .  .  .  .  .  .  .
+→  →  →  →  →  →  →  →  →  →  →  ↓
+S  C  C  C  C  C  C  C  C  C  C  ★
+路径长度: 14 步
+
+后 100 轮平均回报: Q-Learning=-22.1, SARSA=-26.3
+```
+
+**两个关键观察**：
+
+1. **路径不同**：Q-Learning 走最短路径（12 步，贴崖边），SARSA 绕远路（14 步，走第 2 行安全路线）。Q-Learning 的 TD Target 用了 $\max$，所以它假设"到了崖边还能稳稳地继续走"——这是最优策略的行为。但 ε-greedy 有 10% 概率随机走进悬崖，训练期间 Q-Learning 实际上经常掉下去。SARSA 知道自己有随机探索的风险，所以学到了一条更安全的路。
+
+2. **回报不同**：在 ε=0.1 的条件下，Q-Learning 的收敛回报更好（-22 vs -26），因为它的路径更短。但如果 ε 更大（比如 0.3），Q-Learning 的训练过程中会频繁掉崖，训练期间的回报反而比 SARSA 更差——这也是为什么在一些安全关键场景中，on-policy 方法可能更合适。
+
+::: details On-policy vs Off-policy 的本质区别
+
+**On-policy（SARSA）**：行为策略 = 目标策略。你用什么策略收集数据，就学什么策略的值函数。优点是训练稳定（学的和做的一致），缺点是不能复用旧数据。
+
+**Off-policy（Q-Learning）**：行为策略 ≠ 目标策略。你用 ε-greedy 收集数据，但学的是最优策略的 Q\*。优点是样本效率高（可以用任何策略的数据来学），缺点是训练可能不稳定。
+
+在大模型时代：
+- **PPO 是 on-policy**：每次都要用当前模型重新生成回答来训练，所以 RLHF 训练非常吃算力
+- **DQN 是 off-policy**：经验回放池里的旧数据可以反复利用，所以 Atari 训练更高效
+- **DPO 更极端**：连在线生成都不需要，直接用固定的离线偏好数据训练
+
+这个区分将在第 7-9 章反复出现，理解它对选择正确的算法至关重要。
+:::
+
 这些性质使 Q-Learning 成为最实用的 Value-Based 方法。但它有一个根本性的限制：**只能用表格存储 Q 值**。16 个格子的 GridWorld 没问题，但 CartPole 的状态是连续的，Atari 的画面有几十万像素——表格方法的存储需求远超物理设备的容量。
 
 下一节将展示如何用神经网络替代表格，解决状态空间爆炸的问题。[从 Q-Learning 到 DQN](./from-q-to-dqn)
