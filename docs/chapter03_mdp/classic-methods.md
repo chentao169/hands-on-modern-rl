@@ -78,6 +78,25 @@ $$Q(s, a) \leftarrow Q(s, a) + \alpha \left[ r + \gamma \max_{a'} Q(s', a') - Q(
 
 注意那个 $\max_{a'}$——它直接使用了贝尔曼最优方程的思想：不看所有动作的平均，只看最好的那个。这意味着 Q-Learning 学的是 $Q^*$（最优动作价值），不管你当前用什么策略在探索——这就是离策略（off-policy）学习。
 
+### Sarsa：Q-Learning 的同策略对照
+
+Q-Learning 在更新时用的是 $\max_{a'} Q(s', a')$——不管实际选了什么动作，都按最优的那个来算目标。但如果你实际探索时经常走弯路（比如 ε-greedy 有 10% 概率随机走），Q-Learning 的目标值和实际行为之间就存在差距。
+
+Sarsa 用的是**实际选的下一个动作** $a'$ 来构造目标，而不是 max：
+
+$$Q(s, a) \leftarrow Q(s, a) + \alpha \left[ r + \gamma Q(s', a') - Q(s, a) \right]$$
+
+这里 $a'$ 就是当前策略在状态 $s'$ 时**实际选出的动作**——可能是贪心最优，也可能是 ε-greedy 的随机探索。因为评估和改进用的是同一条策略，Sarsa 是**同策略（on-policy）**方法。
+
+| | Sarsa（on-policy） | Q-Learning（off-policy） |
+| --- | --- | --- |
+| 更新目标 | $r + \gamma Q(s', a')$，$a'$ 由当前策略选 | $r + \gamma \max_{a'} Q(s', a')$ |
+| 行为策略 = 目标策略？ | 是 | 否 |
+| 风格 | 保守，考虑了探索噪声 | 激进，假设总能选最优 |
+| 后续对应 | PPO、GRPO（第 6、8 章） | DQN、SAC（第 4 章） |
+
+一个直觉对比：如果 GridWorld 旁边有个悬崖，Q-Learning 会学到紧贴悬崖走的最短路径（因为它假设自己不会犯错），但实际走的时候 ε-greedy 的随机探索可能掉下去。Sarsa 会学到离悬崖远一点的安全路径（因为它把随机探索的可能性也考虑进去了）。两种策略各有适用场景——第 4 章的 DQN 走的是 Q-Learning 路线，第 6 章的 PPO 走的是 Sarsa 这一脉的 on-policy 路线。
+
 三代方法的演进可以用一句话概括：DP 需要知道一切但不现实，MC 不需要知道一切但要等很久，TD 不需要知道一切也不需要等——它每走一步就能学一点。
 
 ## 动手：4×4 GridWorld 跑 Q-Learning

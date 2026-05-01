@@ -196,6 +196,47 @@ r_t^{\text{total}}=r_t^{\text{extrinsic}}+\beta r_t^{\text{intrinsic}}
 \quad \text{（总奖励组合式；作用：合并任务奖励和探索奖励；详见 3.7）}
 $$
 
+## 标量形式与矩阵形式对照
+
+本章公式均采用逐状态（标量）形式。将所有状态排成向量、转移关系写成矩阵后，$n$ 个标量方程可压缩为一行矩阵方程。
+
+### 符号约定
+
+| 符号 | 维度 | 含义 |
+| --- | --- | --- |
+| $\boldsymbol{v}_\pi$ | $n \times 1$ | 所有状态的价值 |
+| $\boldsymbol{r}_\pi$ | $n \times 1$ | 每个状态的期望即时奖励 |
+| $P_\pi$ | $n \times n$ | 策略诱导的转移矩阵，$P_\pi[i,j]=\sum_a \pi(a\mid s_i)p(s_j\mid s_i,a)$ |
+| $\boldsymbol{q}_\pi$ | $n|\mathcal{A}| \times 1$ | 所有 $(s,a)$ 对的 Q 值 |
+| $P$ | $n|\mathcal{A}| \times n$ | 转移矩阵，$P[(s,a),s']=P(s'\mid s,a)$ |
+| $\Pi_\pi$ | $n \times n|\mathcal{A}|$ | 策略矩阵，$\Pi_\pi[s,(s,a)]=\pi(a\mid s)$ |
+
+### 对照总表
+
+| 概念 | 逐状态形式（本章正文） | 矩阵形式 |
+| --- | --- | --- |
+| 贝尔曼期望方程 | $V^\pi(s)=\sum_a\pi(a\mid s)\left[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V^\pi(s')\right]$ | $\boldsymbol{v}_\pi = \boldsymbol{r}_\pi + \gamma P_\pi \boldsymbol{v}_\pi$ |
+| 贝尔曼最优方程 | $V^*(s)=\max_a\left[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V^*(s')\right]$ | $\boldsymbol{v}_* = \boldsymbol{r}_* + \gamma P_* \boldsymbol{v}_*$（逐行取 max） |
+| 闭式解 | — | $\boldsymbol{v} = (I - \gamma P)^{-1}\boldsymbol{r}$ |
+| V-Q 关系 | $V^\pi(s)=\sum_a\pi(a\mid s)Q^\pi(s,a)$ | $\boldsymbol{v}_\pi = \Pi_\pi \boldsymbol{q}_\pi$ |
+| Q 贝尔曼期望 | $Q^\pi(s,a)=R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)\sum_{a'}\pi(a'\mid s')Q^\pi(s',a')$ | $\boldsymbol{q}_\pi = \boldsymbol{r} + \gamma P \Pi_\pi \boldsymbol{q}_\pi$ |
+| Q 贝尔曼最优 | $Q^*(s,a)=R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)\max_{a'}Q^*(s',a')$ | $\boldsymbol{q}_* = \boldsymbol{r} + \gamma P \cdot\mathrm{rowmax}(\boldsymbol{q}_*)$ |
+| DP 策略评估 | $V(s) \leftarrow \sum_a\pi(a\mid s)[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V(s')]$ | $\boldsymbol{v}_{k+1} = \boldsymbol{r}_\pi + \gamma P_\pi \boldsymbol{v}_k$ |
+
+MC 和 TD 基于采样更新单个状态，没有对应的矩阵形式。
+
+### 从 Q 的矩阵形式推出 V 的矩阵形式
+
+将 $\boldsymbol{v}_\pi = \Pi_\pi \boldsymbol{q}_\pi$ 代入 $\boldsymbol{q}_\pi = \boldsymbol{r} + \gamma P \boldsymbol{v}_\pi$，两边左乘 $\Pi_\pi$：
+
+$$
+\Pi_\pi \boldsymbol{q}_\pi = \Pi_\pi \boldsymbol{r} + \gamma \Pi_\pi P \boldsymbol{v}_\pi
+\quad\Longrightarrow\quad
+\boldsymbol{v}_\pi = \underbrace{\Pi_\pi \boldsymbol{r}}_{\boldsymbol{r}_\pi} + \gamma \underbrace{\Pi_\pi P}_{P_\pi} \boldsymbol{v}_\pi
+$$
+
+Q 的矩阵形式保留了动作维度（策略平均由 $\Pi_\pi$ 单独完成），V 的矩阵形式已把策略平均融进了 $\boldsymbol{r}_\pi$ 和 $P_\pi$——这正是"$Q$ 比 $V$ 携带更细粒度信息"的矩阵语言表达。
+
 ## 公式之间的依赖关系
 
 本章各公式并非相互独立，而是构成一组逐层递进的定义和推论。

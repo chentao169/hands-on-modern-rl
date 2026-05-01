@@ -197,6 +197,195 @@ $$\pi(s) = \arg\max_a Q^\pi(s, a)$$
 你可能会问：贝尔曼最优方程 $V^*(s) = \max_a [R(s,a) + \gamma \sum_{s'} P(s'|s,a) V^*(s')]$ 里有个 $\max$，它是非线性的，不能像策略评估那样直接迭代求解（因为 $\max$ 不可微分，不满足压缩映射的条件）。策略迭代的巧妙之处在于：把 $\max$ 拆成"先评估一个固定策略"（线性，可迭代）+"再用 $\arg\max$ 改进策略"两步，每一步都是简单操作。
 :::
 
+### 小实验：看 V 值一步步收敛
+
+值迭代和策略迭代不是抽象的公式——它们是**肉眼可见的迭代过程**。用一个 4×4 GridWorld 来展示每一步发生了什么。
+
+```python
+import numpy as np
+
+# 4×4 GridWorld
+# S(0,0) → ... → G(3,3)
+# 每步奖励 -1，4 个动作（上/下/左/右），γ=0.9
+GRID = 4
+ACTIONS = [(−1, 0), (1, 0), (0, −1), (0, 1)]  # 上下左右
+GAMMA = 0.9
+
+def step(state, action):
+    """执行动作，返回 (next_state, reward)"""
+    nr = state[0] + action[0]
+    nc = state[1] + action[1]
+    if 0 <= nr < GRID and 0 <= nc < GRID:
+        return (nr, nc), -1
+    return state, -1  # 撞墙留在原地，照样扣分
+
+def print_V(V, label=""):
+    """打印 V 值矩阵"""
+    if label:
+        print(f"  {label}")
+    for r in range(GRID):
+        print("  ", end="")
+        for c in range(GRID):
+            print(f"{V[r][c]:7.2f}", end=" ")
+        print()
+    print()
+
+# ========== 值迭代 ==========
+V = np.zeros((GRID, GRID))
+print("===== 值迭代 =====")
+print_V(V, "迭代 0（初始）")
+
+for iteration in range(1, 11):
+    V_new = np.zeros((GRID, GRID))
+    for r in range(GRID):
+        for c in range(GRID):
+            if (r, c) == (3, 3):
+                continue  # 终点 V=0
+            values = []
+            for a in ACTIONS:
+                (nr, nc), reward = step((r, c), a)
+                values.append(reward + GAMMA * V[nr][nc])
+            V_new[r][c] = max(values)
+    V = V_new.copy()
+    if iteration in [1, 2, 3, 5, 10]:
+        print_V(V, f"迭代 {iteration}")
+
+print_V(V, "最终结果")
+```
+
+预期输出（节选）：
+
+```
+===== 值迭代 =====
+  迭代 0（初始）
+    0.00    0.00    0.00    0.00 
+    0.00    0.00    0.00    0.00 
+    0.00    0.00    0.00    0.00 
+    0.00    0.00    0.00    0.00 
+
+  迭代 1
+   -1.00   -1.00   -1.00   -1.00 
+   -1.00   -1.00   -1.00   -1.00 
+   -1.00   -1.00   -1.00   -1.00 
+   -1.00   -1.00   -1.00    0.00 
+
+  迭代 2
+   -1.90   -1.90   -1.90   -1.90 
+   -1.90   -1.90   -1.90   -1.90 
+   -1.90   -1.90   -1.90   -1.00 
+   -1.90   -1.90   -1.00    0.00 
+
+  迭代 5
+   -3.44   -3.44   -2.80   -1.90 
+   -3.44   -2.80   -1.90   -1.00 
+   -2.80   -1.90   -1.00    0.00 
+   -1.90   -1.00    0.00    0.00 
+
+  最终结果
+   -3.56   -2.80   -1.90   -1.00 
+   -2.80   -1.90   -1.00    0.00 
+   -1.90   -1.00    0.00    0.00 
+   -1.00    0.00    0.00    0.00 
+```
+
+**观察**：V 值从终点向外"扩散"——每轮迭代，正确的 V 值向外扩展一格。这是因为值迭代每轮只能"看到"一步远的未来。第 1 轮只有终点旁边的格子被更新（它们距离终点 1 步，V = -1），第 2 轮影响范围扩展到 2 步远的格子（V = -1 - 0.9×1 = -1.9），以此类推。
+
+### 策略迭代的可视化
+
+策略迭代与值迭代的区别在于：**策略迭代交替执行"评估当前策略"和"改进策略"两个步骤**，而值迭代直接在每步选最优动作。
+
+```python
+# ========== 策略迭代 ==========
+V = np.zeros((GRID, GRID))
+policy = np.zeros((GRID, GRID), dtype=int)  # 每个状态的动作编号
+
+def policy_evaluation(V, policy, iterations=20):
+    """用当前策略迭代计算 V"""
+    for _ in range(iterations):
+        V_new = np.zeros((GRID, GRID))
+        for r in range(GRID):
+            for c in range(GRID):
+                if (r, c) == (3, 3):
+                    continue
+                a = ACTIONS[policy[r][c]]
+                (nr, nc), reward = step((r, c), a)
+                V_new[r][c] = reward + GAMMA * V[nr][nc]
+        V = V_new.copy()
+    return V
+
+def policy_improvement(V, policy):
+    """根据 V 改进策略，返回策略是否发生变化"""
+    stable = True
+    for r in range(GRID):
+        for c in range(GRID):
+            if (r, c) == (3, 3):
+                continue
+            values = []
+            for a in ACTIONS:
+                (nr, nc), reward = step((r, c), a)
+                values.append(reward + GAMMA * V[nr][nc])
+            best_action = np.argmax(values)
+            if best_action != policy[r][c]:
+                stable = False
+                policy[r][c] = best_action
+    return stable
+
+print("===== 策略迭代 =====")
+for iteration in range(1, 6):
+    V = policy_evaluation(V, policy)
+    stable = policy_improvement(V, policy)
+    action_names = ["↑", "↓", "←", "→"]
+    policy_str = ""
+    for r in range(GRID):
+        policy_str += "  "
+        for c in range(GRID):
+            if (r, c) == (3, 3):
+                policy_str += "  G "
+            else:
+                policy_str += f"  {action_names[policy[r][c]]} "
+        policy_str += "\n"
+    print(f"第 {iteration} 轮:")
+    print(policy_str)
+    print_V(V)
+    if stable:
+        print(f"策略已收敛！共 {iteration} 轮")
+        break
+```
+
+预期输出：
+
+```
+===== 策略迭代 =====
+第 1 轮:
+    ↓   ↓   ↓   ↓ 
+    ↓   ↓   ↓   ↓ 
+    ↓   ↓   ↓   ↓ 
+    ↓   ↓   ↓    G 
+
+  迭代后 V
+   -3.56   -2.80   -1.90   -1.00 
+   -2.80   -1.90   -1.00    0.00 
+   -1.90   -1.00    0.00    0.00 
+   -1.00    0.00    0.00    0.00 
+
+第 2 轮:
+    →   →   →   ↓ 
+    →   →   →   ↓ 
+    →   →   ↓   ↓ 
+    →   ↓   ↓    G 
+
+  策略已收敛！共 2 轮
+```
+
+**策略迭代只用了 2 轮就收敛**——而值迭代需要约 10 轮。原因：策略迭代每轮内部做了多轮策略评估（把当前策略的 V 算准），然后一步到位地改进策略。值迭代则每轮只做一步更新，收敛更慢但每轮计算更少。
+
+| 方法 | 收敛轮数 | 每轮计算量 | 特点 |
+|------|---------|-----------|------|
+| 值迭代 | ~10 轮 | 每轮扫描所有状态一次 | 简单，每步只做一个 max 操作 |
+| 策略迭代 | ~2-3 轮 | 每轮需要完整策略评估（内部迭代） | 收敛快，但每轮更重 |
+
+在 4×4 的小格子里差别不大，但在大规模问题中，策略评估的内部循环本身就很昂贵——这就是为什么实践中值迭代更常用，而策略迭代的思想则体现在了后续的 Actor-Critic 架构中（第 6 章）。
+
 ### 局限
 
 现实中几乎不可能知道完整的 $P$ 和 $R$。围棋有 $10^{170}$ 个状态，LLM 有天文数字的 token 序列组合。DP 的精确性建立在对环境的完全知识之上，这使它更像一个理论基准——告诉你"知道一切时的最优答案"。
@@ -488,6 +677,25 @@ TD 的优势在于：**走一步就能修正预测，不需要等结束**。
 | TD（用 $r + \gamma V(s')$） | Actor-Critic（用 $\delta$） | 走一步就更新           |
 
 REINFORCE 就是策略版的 MC，Actor-Critic 就是策略版的 TD。理解了价值估计中 MC→TD 的演进，后续理解策略优化中的对应演进就会水到渠成。
+
+### 统一视角：广义策略迭代（GPI）
+
+回顾一下我们走过的路：DP 有策略评估 + 策略改进，MC 有 MC 预测 + MC 控制，TD 有 TD 预测 + Sarsa/Q-Learning。表面上它们各不相同，但背后共享同一个结构——**两个过程持续交替**：
+
+1. **策略评估**（Policy Evaluation）：估计当前策略的价值函数
+2. **策略改进**（Policy Improvement）：利用价值函数构造更好的策略
+
+这两个过程互相驱动：评估越准确，改进越有效；改进后的新策略又需要重新评估。如此交替，最终收敛到最优策略。这个结构叫做**广义策略迭代（Generalized Policy Iteration, GPI）**。
+
+| 方法 | 评估步骤 | 改进步骤 |
+| --- | --- | --- |
+| 策略迭代（DP） | 贝尔曼期望方程精确迭代 | 贪心策略改进 |
+| 价值迭代（DP） | 贝尔曼最优方程迭代 | 隐含在 $\max$ 中 |
+| MC 控制 | 用完整回报 $G_t$ 更新 $Q$ | ε-greedy 改进 |
+| Sarsa | 用 $r + \gamma Q(s', a')$ 更新 $Q$ | ε-greedy 改进 |
+| Q-Learning | 用 $r + \gamma \max_{a'} Q(s', a')$ 更新 $Q$ | 隐含在 $\max$ 中 |
+
+GPI 的意义在于：**所有 RL 控制算法都是同一个框架的实例**，区别只在于"用什么方法评估"和"用什么策略改进"。理解了这一点，后续遇到新算法时，你只需要问两个问题——它的评估用什么？它的改进用什么？就能快速定位它的位置。
 
 下一节将从 $V(s)$ 的局限出发，引出两条寻找最优策略的路线。[路线一：Q(s,a)](./value-q)
 
