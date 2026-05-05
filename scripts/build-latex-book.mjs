@@ -44,7 +44,7 @@ const pdfPaperHeight = process.env.PDF_PAPER_HEIGHT || '297mm'
 const pdfBodyFontSize = process.env.PDF_BODY_FONT_SIZE || '9'
 const pdfBodyLineHeight = process.env.PDF_BODY_LINE_HEIGHT || '10.8'
 const pdfImageWidth = process.env.PDF_IMAGE_WIDTH || '0.96\\linewidth'
-const pdfImageMaxHeight = process.env.PDF_IMAGE_MAX_HEIGHT || '0.58\\textheight'
+const pdfImageMaxHeight = process.env.PDF_IMAGE_MAX_HEIGHT || '0.42\\textheight'
 const pdfDiagramImageWidth =
   process.env.PDF_DIAGRAM_IMAGE_WIDTH || '0.98\\linewidth'
 const pdfDiagramImageMaxHeight =
@@ -52,7 +52,7 @@ const pdfDiagramImageMaxHeight =
 const pdfOptimize = !['0', 'false', 'no', 'off'].includes(
   String(process.env.PDF_OPTIMIZE || '1').toLowerCase()
 )
-const pdfOptimizeProfile = process.env.PDF_OPTIMIZE_PROFILE || 'ebook'
+const pdfOptimizeProfile = process.env.PDF_OPTIMIZE_PROFILE || 'default'
 const pdfEnglishTitle = process.env.PDF_ENGLISH_TITLE || 'Hands-On Modern RL'
 const pdfChineseTitle = process.env.PDF_CHINESE_TITLE || '现代强化学习实战'
 const pdfBookTitle =
@@ -792,6 +792,17 @@ function renderMarkdown(markdown, sourceFile) {
       }
 
       const { title, notes } = extractHeadingFootnotes(heading[2])
+
+      // Remove empty "参考文献" or "参考资料" heading because we convert footnotes into LaTeX \footnote{}
+      if (
+        /^(?:参考文献|参考资料|延伸阅读与参考资料)$/.test(
+          stripMarkdown(title).trim()
+        )
+      ) {
+        index += 1
+        continue
+      }
+
       output.push(renderHeading(level, title))
       if (notes.length) output.push(`\\mbox{}${notes.join('')}\n`)
       index += 1
@@ -1008,6 +1019,13 @@ function convertAnimatedOrWebAsset(sourcePath, targetPath) {
 }
 
 function convertSvgAsset(sourcePath, pdfTargetPath, pngTargetPath) {
+  // SVG rendering engines like librsvg (rsvg-convert) or Inkscape often fail
+  // to render complex Matplotlib SVGs correctly (e.g. black blocks or clipping issues).
+  // Chrome/Puppeteer is the most reliable way to render SVGs accurately.
+  if (renderBookAsset('svg', sourcePath, pngTargetPath)) {
+    return pngTargetPath
+  }
+
   if (
     runTool('rsvg-convert', ['-f', 'pdf', '-o', pdfTargetPath, sourcePath]) ||
     runTool('inkscape', [
@@ -1023,15 +1041,7 @@ function convertSvgAsset(sourcePath, pdfTargetPath, pngTargetPath) {
     runTool('rsvg-convert', ['-f', 'png', '-o', pngTargetPath, sourcePath]) ||
     runTool('magick', [sourcePath, pngTargetPath]) ||
     runTool('convert', [sourcePath, pngTargetPath]) ||
-    runTool('sips', [
-      '-s',
-      'format',
-      'png',
-      sourcePath,
-      '--out',
-      pngTargetPath
-    ]) ||
-    renderBookAsset('svg', sourcePath, pngTargetPath)
+    runTool('sips', ['-s', 'format', 'png', sourcePath, '--out', pngTargetPath])
   ) {
     return pngTargetPath
   }
@@ -1360,6 +1370,10 @@ function latexPreamble() {
 \tolerance=1600
 \hbadness=3000
 \raggedbottom
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\bottomfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.95}
 \renewcommand{\contentsname}{目录}
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
@@ -1631,12 +1645,12 @@ function compileLatex() {
 }
 
 function normalizeGhostscriptProfile(value) {
-  const clean = String(value || 'ebook')
+  const clean = String(value || 'default')
     .trim()
     .replace(/^\//, '')
     .toLowerCase()
   const allowed = new Set(['screen', 'ebook', 'printer', 'prepress', 'default'])
-  return allowed.has(clean) ? `/${clean}` : '/ebook'
+  return allowed.has(clean) ? `/${clean}` : '/default'
 }
 
 function optimizePdfOutput() {
@@ -1649,6 +1663,10 @@ function optimizePdfOutput() {
     '-sDEVICE=pdfwrite',
     '-dCompatibilityLevel=1.7',
     `-dPDFSETTINGS=${normalizeGhostscriptProfile(pdfOptimizeProfile)}`,
+    '-dColorConversionStrategy=/LeaveColorUnchanged',
+    '-dDownsampleColorImages=false',
+    '-dDownsampleGrayImages=false',
+    '-dDownsampleMonoImages=false',
     '-dDetectDuplicateImages=true',
     '-dCompressFonts=true',
     '-dSubsetFonts=true',

@@ -71,7 +71,7 @@ jobs:
           PDF_BOOK_LIMIT: 0
           LATEX_BOOK_FILE_NAME: ${{ steps.release.outputs.asset_name }}
           PDF_OPTIMIZE: 1
-          PDF_OPTIMIZE_PROFILE: ebook
+          PDF_OPTIMIZE_PROFILE: default
           PUPPETEER_EXECUTABLE_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
 
       - name: Verify PDF asset
@@ -105,7 +105,7 @@ jobs:
           - 作者信息：WalkingLabs；散步 <https://github.com/sanbuphy>
           - GitHub 仓库信息：<https://github.com/${GITHUB_REPOSITORY}>
           - GIF/WebP/AVIF 构建时抽帧转 PNG，SVG/Mermaid 构建时预渲染为 PDF/PNG
-          - Ghostscript ebook 档优化 PDF 体积，适合 Release 下载与离线阅读
+          - Ghostscript 优化 PDF 结构与字体，适合 Release 下载与离线阅读
           - 局部参考文献、脚注和常见 Markdown 结构清理
 
           ## Assets 说明
