@@ -18,7 +18,7 @@
   </p>
 
   <p>
-    <a href="#wechat-group">💬 WeChat Group</a>
+    <a href="#wechat-group-微信">WeChat Group (微信)</a>
   </p>
 
   <p>
@@ -130,7 +130,7 @@
 - [参与贡献](#参与贡献)
 - [Star History](#star-history)
 - [其他课程](#其他课程)
-- [WeChat Group](#wechat-group)
+- [WeChat Group (微信)](#wechat-group-微信)
 - [引用](#引用)
 - [开源协议](#开源协议)
 
@@ -524,9 +524,9 @@ npm run verify        # 运行格式检查、Lint、构建和产物验证
 
 [![LEARN HARNESS ENGINEERING](https://img.shields.io/badge/LEARN_HARNESS_ENGINEERING-0052cc?style=for-the-badge)](https://github.com/walkinglabs/learn-harness-engineering)
 
-## WeChat Group
+## WeChat Group (微信)
 
-有任何建议 / 反馈，欢迎扫码加入 WeChat Group 交流：
+有任何建议 / 反馈，欢迎扫码加入 WeChat Group（微信）交流：
 
 <img src="https://github.com/walkinglabs/.github/raw/main/profile/wechat.png" alt="WeChat Group" width="300" />
 

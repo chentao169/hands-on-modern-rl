@@ -18,6 +18,10 @@
   </p>
 
   <p>
+    <a href="#wechat-group-微信">WeChat Group (微信)</a>
+  </p>
+
+  <p>
     <a href="#course-preview">Course Preview</a> ·
     <a href="#overview">Overview</a> ·
     <a href="#news">News</a> ·
@@ -126,7 +130,7 @@
 - [Contributing](#contributing)
 - [Star History](#star-history)
 - [Other Courses](#other-courses)
-- [WeChat Group](#wechat-group)
+- [WeChat Group (微信)](#wechat-group-微信)
 - [Citation](#citation)
 - [License](#license)
 
@@ -520,9 +524,9 @@ Our team has also created other courses. Take a look:
 
 [![LEARN HARNESS ENGINEERING](https://img.shields.io/badge/LEARN_HARNESS_ENGINEERING-0052cc?style=for-the-badge)](https://github.com/walkinglabs/learn-harness-engineering)
 
-## WeChat Group
+## WeChat Group (微信)
 
-For suggestions or feedback, scan the QR code to join the WeChat group:
+For suggestions or feedback, scan the QR code to join the WeChat group (微信):
 
 <img src="https://github.com/walkinglabs/.github/raw/main/profile/wechat.png" alt="WeChat Group" width="300" />
 
