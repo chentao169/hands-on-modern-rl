@@ -198,7 +198,7 @@ OpenRLHF 常见组合是 Ray + vLLM + DeepSpeed；veRL 同时支持 vLLM、SGLan
 
 ### 1.6 训练/编排层：TRL 的单机研究原型
 
-TRL（Transformer Reinforcement Learning）是 HuggingFace 生态内的 RL 训练库 [^trl]。前面各章的 DPO（第 2 章）和 GRPO（第 8 章）实验都用 TRL 完成。它的定位和前面三个框架不同：TRL 不是分布式编排系统——它不做 Ray 调度，不做 rollout engine 与 trainer 的进程分离，也不做跨 GPU 的 weight sync。它把 DPO/PPO/GRPO/REINFORCE++ 的训练循环封装成 `DPOTrainer`、`GRPOTrainer` 等 Trainer 类，在单机或少量 GPU 上运行 [^trl]。
+TRL（Transformer Reinforcement Learning）是 HuggingFace 生态内的 RL 训练库 [^trl]。前面各章的 DPO（第 2 章）和 GRPO（第 9 章）实验都用 TRL 完成。它的定位和前面三个框架不同：TRL 不是分布式编排系统——它不做 Ray 调度，不做 rollout engine 与 trainer 的进程分离，也不做跨 GPU 的 weight sync。它把 DPO/PPO/GRPO/REINFORCE++ 的训练循环封装成 `DPOTrainer`、`GRPOTrainer` 等 Trainer 类，在单机或少量 GPU 上运行 [^trl]。
 
 这意味着 TRL 的内部数据流比 OpenRLHF/veRL/slime 简单得多：
 

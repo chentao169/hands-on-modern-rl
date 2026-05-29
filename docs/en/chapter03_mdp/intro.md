@@ -45,7 +45,7 @@ Following the value function further naturally splits into **two algorithmic rou
 - **Value-based route**: Learn $Q(s,a)$, score each action, then choose the action with the highest score — leading to Q-Learning and Deep Q-Networks.
 - **Policy-based route**: Directly define a policy objective $J(\theta)$ and optimize the policy parameters through gradient methods — leading to policy gradient, Actor-Critic, and PPO.
 
-This chapter serves as the **theoretical foundation** for the entire book. Chapter 4's Deep Q-Networks depend on $Q(s,a)$, Chapter 5's policy gradient depends on $J(\theta)$, and Chapter 6's Actor-Critic and PPO use both value estimation and policy optimization ideas. After understanding this chapter, many formulas in subsequent algorithms will no longer appear as isolated techniques, but as natural consequences derived from **the same decision modeling framework**.
+This chapter serves as the **theoretical foundation** for the entire book. Chapter 4's Deep Q-Networks depend on $Q(s,a)$, Chapter 5's policy gradient depends on $J(\theta)$, and Chapter 6's Actor-Critic plus Chapter 7's PPO use both value estimation and policy optimization ideas. After understanding this chapter, many formulas in subsequent algorithms will no longer appear as isolated techniques, but as natural consequences derived from **the same decision modeling framework**.
 
 ## Section Outline
 

@@ -483,7 +483,7 @@ def deepcoder_evaluator(task, episode):
 有测试失败 → reward = 0.0, is_correct = False
 ```
 
-reward 只有 0 和 1 两个值——没有中间状态。这就是第 8 章讲的 **RLVR（可验证奖励）**：代码要么对要么不对，不需要 Reward Model 来猜。
+reward 只有 0 和 1 两个值——没有中间状态。这就是第 9 章讲的 **RLVR（可验证奖励）**：代码要么对要么不对，不需要 Reward Model 来猜。
 
 ## 第四步：跑基线评测——训练前模型有多强？
 
@@ -694,7 +694,7 @@ rllm train deepcoder \
 
 ### 训练过程发生了什么？
 
-GRPO 的训练循环（对应第 8 章的算法）：
+GRPO 的训练循环（对应第 9 章的算法）：
 
 ```text
 对每道题：

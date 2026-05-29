@@ -6,9 +6,9 @@ title: Part II Summary
 
 ## What Did We Learn in This Part?
 
-These four chapters form the theoretical core of the book. We started from the most basic question, "How do we describe decision-making in mathematics?", and progressed all the way to PPO, the most widely used algorithm in modern industry. Mastering this part gives you the key to reading essentially all later LLM alignment algorithms.
+These five chapters form the theoretical core of the book. We started from the most basic question, "How do we describe decision-making in mathematics?", and progressed all the way to PPO, the most widely used algorithm in modern industry. Mastering this part gives you the key to reading essentially all later LLM alignment algorithms.
 
-After these four chapters, you should understand:
+After these five chapters, you should understand:
 
 - **The MDP 5-tuple** $(S, A, P, R, \gamma)$: a mathematical language for "an agent makes decisions in an environment."
 - **Value functions and Bellman equations**: $V^\pi(s)$ and $Q^\pi(s,a)$ measure "how valuable a state is" and "how valuable an action at a state is." Bellman equations tell us: current value = immediate reward + discounted next-step value.
@@ -177,6 +177,8 @@ $$\nabla_\theta J(\theta) = \mathbb{E}_{\pi_\theta}\left[\nabla_\theta \log \pi_
 
 As long as $b(s)$ does not depend on the action $a$, this modification does not change the expected gradient (because $\mathbb{E}_{a \sim \pi}[\nabla \log \pi(a|s)] = 0$), but it can greatly reduce variance. The most common baseline is the state-value function $V(s)$, i.e., the Critic.
 
+## Chapter 6: Actor-Critic - Reducing Variance with a Critic
+
 ### The Actor-Critic Architecture
 
 Combining the Actor (policy network) and the Critic (value network) yields the Actor-Critic architecture. The Actor selects actions, and the Critic evaluates "how much better this action is than average." That quantity is the **advantage function**:
@@ -213,7 +215,7 @@ critic_loss = td_error ** 2                 # Critic: update value using TD erro
 loss = actor_loss + critic_loss
 ```
 
-## Chapter 6: PPO - Making Policy Updates More Stable
+## Chapter 7: PPO - Making Policy Updates More Stable
 
 ### Trust Regions and Clipping
 

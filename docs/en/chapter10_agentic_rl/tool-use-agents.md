@@ -78,7 +78,7 @@ class ToolAugmentedPolicy(nn.Module):
 
 ## Reward Design: The Scenario Determines the Reward
 
-Unlike preference alignment, tool-use reward is often not subjective. It can be designed from objective signals. In fact, this is a direct application of **RLVR (Reinforcement Learning from Verifiable Rewards)** from Chapter 8 to agentic settings.
+Unlike preference alignment, tool-use reward is often not subjective. It can be designed from objective signals. In fact, this is a direct application of **RLVR (Reinforcement Learning from Verifiable Rewards)** from Chapter 9 to agentic settings.
 
 | Scenario               | Reward source                                  | Type                             | Special consideration                  |
 | ---------------------- | ---------------------------------------------- | -------------------------------- | -------------------------------------- |
@@ -204,7 +204,7 @@ This method reaches 93% accuracy on real-world patch verification. Its core valu
 
 ### Scaling Laws from Code Bootstrapping[^zeroscaling]
 
-Chapter 8 discussed RL scaling laws: more training steps lead to stronger reasoning ability. Agentic RL has its own scaling laws as well. ZeroTIR lets a model spontaneously learn to generate and execute code to support reasoning **without supervised examples**. Researchers found a predictable relationship: there is a **power-law relationship** between training steps, code execution frequency, and final accuracy. This means you can predict final model performance early in training. If code execution frequency is still rising after 100 steps, the model is still learning and training should continue. If the frequency has plateaued, learning is close to saturation and training can stop early.
+Chapter 12 discusses standard RL scaling laws in detail: more training steps often lead to stronger reasoning ability. Agentic RL has its own scaling laws as well. ZeroTIR lets a model spontaneously learn to generate and execute code to support reasoning **without supervised examples**. Researchers found a predictable relationship: there is a **power-law relationship** between training steps, code execution frequency, and final accuracy. This means you can predict final model performance early in training. If code execution frequency is still rising after 100 steps, the model is still learning and training should continue. If the frequency has plateaued, learning is close to saturation and training can stop early.
 
 This finding is important for engineering practice. It gives you a **free training-progress indicator**: without running the entire training process, you can monitor code execution frequency to decide whether training should continue. ZeroTIR was accepted by NeurIPS 2025.
 
@@ -329,11 +329,11 @@ def tool_rl_training_loop(
             optimizer.zero_grad()
 ```
 
-The core idea of this training loop is very similar to GRPO in Chapter 8: sample multiple trajectories within a group and compute advantages through relative comparison. The difference is that GRPO compares multiple text answers, while here we compare multiple tool-call trajectories.
+The core idea of this training loop is very similar to GRPO in Chapter 9: sample multiple trajectories within a group and compute advantages through relative comparison. The difference is that GRPO compares multiple text answers, while here we compare multiple tool-call trajectories.
 
 ## Connection to RLVR
 
-You may have noticed that reward design for tool-use RL is very similar to RLVR in Chapter 8. This is not a coincidence. **Agentic RL is the natural extension of RLVR to multi-turn interaction settings**. The core idea of RLVR is to use verifiable outcomes as rewards, without training a reward model. In tool-use settings, tool execution results are naturally verifiable: whether code passes tests, whether SQL query results are correct, whether search results contain the target information. All of these can be verified automatically without human labels.
+You may have noticed that reward design for tool-use RL is very similar to RLVR in Chapter 9. This is not a coincidence. **Agentic RL is the natural extension of RLVR to multi-turn interaction settings**. The core idea of RLVR is to use verifiable outcomes as rewards, without training a reward model. In tool-use settings, tool execution results are naturally verifiable: whether code passes tests, whether SQL query results are correct, whether search results contain the target information. All of these can be verified automatically without human labels.
 
 This is also one reason agentic RL is considered more suitable for agent training than preference alignment (RLHF/DPO). Preference alignment needs a reward model to simulate human preferences, while agent tasks usually have objective evaluation criteria. Directly using verifiable rewards is enough.
 
@@ -392,7 +392,7 @@ The previous sections covered credit assignment in multi-turn RL, trajectory syn
 
 ## Environment Bottlenecks: Why Agentic RL Is Slow
 
-In standard LLM RL training, such as PPO from Chapter 5 or GRPO from Chapter 8, the training loop is purely GPU-based: the model generates answers on the GPU, the reward model scores them on the GPU, and gradients are computed on the GPU. The slowest part is usually GPU computation.
+In standard LLM RL training, such as PPO from Chapter 7 or GRPO from Chapter 9, the training loop is purely GPU-based: the model generates answers on the GPU, the reward model scores them on the GPU, and gradients are computed on the GPU. The slowest part is usually GPU computation.
 
 The training loop for agentic RL is completely different. Whenever the model generates a "tool-call" action, generation must pause and wait for the tool execution result. This execution happens outside the GPU:
 
@@ -581,16 +581,16 @@ In real systems, this asynchronous concurrency can often raise GPU utilization f
 
 Agentic RL did not appear from nowhere. It connects to almost every concept covered in earlier chapters. The table below organizes these connections:
 
-| Concept                      | Earlier chapters                                      | Correspondence in agentic RL                                          |
-| ---------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------- |
-| Action space                 | Only "generate token" (Chapters 5-8)                  | Expanded to "generate text + call tools" (heterogeneous actions)      |
-| Reward source                | RM scoring / preference comparison (Chapters 6 and 8) | Environment execution results (verifiable; Chapter 8 RLVR)            |
-| Credit assignment            | Token level (Chapter 5 PPO)                           | Turn level (across multiple turns, ORM vs PRM)                        |
-| GRPO within-group comparison | Comparing multiple answers (Chapter 8)                | Comparing multiple trajectories (same idea applies)                   |
-| Experience replay            | DQN replay buffer (Chapter 4)                         | Replay of tool-call trajectories (requires reproducible environments) |
-| Policy gradient theorem      | REINFORCE (Chapter 4)                                 | Multi-turn policy gradient (turn-level discounting)                   |
-| Actor-Critic                 | PPO (Chapter 5)                                       | Agentic PPO (critic estimates turn-level value)                       |
-| RLVR                         | Verifiable rewards (Chapter 8)                        | Natural verifiability of tool execution results                       |
+| Concept                      | Earlier chapters                                  | Correspondence in agentic RL                                          |
+| ---------------------------- | ------------------------------------------------- | --------------------------------------------------------------------- |
+| Action space                 | Only "generate token" (Chapters 5-9)              | Expanded to "generate text + call tools" (heterogeneous actions)      |
+| Reward source                | RM scoring / preference comparison (Chapters 8-9) | Environment execution results (verifiable; Chapter 9 RLVR)            |
+| Credit assignment            | Token-level PPO/RLHF (Chapters 7-8)               | Turn level (across multiple turns, ORM vs PRM)                        |
+| GRPO within-group comparison | Comparing multiple answers (Chapter 9)            | Comparing multiple trajectories (same idea applies)                   |
+| Experience replay            | DQN replay buffer (Chapter 4)                     | Replay of tool-call trajectories (requires reproducible environments) |
+| Policy gradient theorem      | REINFORCE (Chapter 5)                             | Multi-turn policy gradient (turn-level discounting)                   |
+| Actor-Critic                 | PPO (Chapter 7)                                   | Agentic PPO (critic estimates turn-level value)                       |
+| RLVR                         | Verifiable rewards (Chapter 9)                    | Natural verifiability of tool execution results                       |
 
 Experience replay in agentic RL is more subtle than in standard DQN. DQN can reuse old data directly because the environment is deterministic in the relevant sense: CartPole physics does not change. In agentic RL, tool execution results may change over time, for example search engine results are updated. Old trajectories may no longer be valid. This means experience replay for agentic RL needs an **expiration mechanism**: old trajectories should be discarded after enough time has passed or after the environment state has changed.
 
@@ -649,7 +649,7 @@ When human experts evaluate agent outputs, they usually use a scoring rubric. Co
 
 **Step 2: Collect preference data.** Ask human annotators, or use an LLM-as-Judge, to compare paired agent outputs: "Which is better, A or B? Why?" The main challenge is **annotation consistency**. Different annotators may have different standards for "process quality". The solution is to first align annotation criteria on a small sample, and only then annotate at scale.
 
-**Step 3: Train a reward model.** Use preference data to train an RM. This is consistent with the Bradley-Terry model used for DPO in Chapter 8. The key difference is that an agent RM may need independent scores along multiple dimensions, instead of a single scalar score, so that RL training can perform fine-grained credit assignment.
+**Step 3: Train a reward model.** Use preference data to train an RM. This is consistent with the Bradley-Terry model used for Reward Model training in Chapter 8. The key difference is that an agent RM may need independent scores along multiple dimensions, instead of a single scalar score, so that RL training can perform fine-grained credit assignment.
 
 ### Evolving Rubrics: RLER
 

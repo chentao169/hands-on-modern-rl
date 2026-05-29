@@ -938,7 +938,7 @@ Visual generation RL may seem far from VLM QA, but it reuses several main thread
 | ------------------------- | ------------------------------------------------------------------------------------------------------- |
 | Chapter 5 REINFORCE       | DDPO treats denoising chains as policy trajectories, updating each step's sampling with terminal reward |
 | Chapter 7 Reward Hacking  | Generation models may please the reward model while sacrificing real user intent                        |
-| Chapter 8 RLVR            | Fine-grained attributes, counts, relationships can become locally verifiable signals                    |
+| Chapter 9 RLVR            | Fine-grained attributes, counts, relationships can become locally verifiable signals                    |
 | Chapter 10 Agentic RL     | Long-horizon credit assignment, multi-component rewards, and KL constraints reappear                    |
 | Sections 11.1-11.3 VLM RL | VLMs can in turn serve as judges, captioners, and reward models for generation models                   |
 

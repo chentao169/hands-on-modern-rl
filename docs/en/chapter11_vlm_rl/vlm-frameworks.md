@@ -55,7 +55,7 @@ where $N_{tools}$ is the number of tool calls and $\lambda$ is the efficiency we
 
 ### Combining with GRPO
 
-VISTA-Gym combines naturally with GRPO. For the same image-question pair, the model generates multiple reasoning chains (each containing a different tool-call sequence), evaluates each group's quality with rule-based rewards, computes within-group relative advantages, and updates the policy. This is exactly the same as GRPO from Chapter 8 — except the generated "answers" go from pure text to "tool-call sequences + final answers."
+VISTA-Gym combines naturally with GRPO. For the same image-question pair, the model generates multiple reasoning chains (each containing a different tool-call sequence), evaluates each group's quality with rule-based rewards, computes within-group relative advantages, and updates the policy. This is exactly the same as GRPO from Chapter 9 — except the generated "answers" go from pure text to "tool-call sequences + final answers."
 
 ## 11.3.3 Framework Comparison
 
@@ -168,12 +168,12 @@ Reviewing the full learning path across chapters, we see RL develop from the sim
 | --------------------- | ------------------------ | ------------------- | ------------------------- | -------------- |
 | Ch 4: DQN             | State vectors / pixels   | Discrete            | Built-in environment      | DQN            |
 | Ch 5: Policy Gradient | State vectors            | Discrete/continuous | Built-in environment      | REINFORCE      |
-| Ch 6: PPO             | Token sequence           | Discrete (tokens)   | RM scoring                | PPO            |
-| Ch 8: GRPO            | Token sequence           | Discrete (tokens)   | Rule verification         | GRPO           |
+| Ch 8: RLHF/PPO        | Token sequence           | Discrete (tokens)   | RM scoring                | PPO            |
+| Ch 9: GRPO            | Token sequence           | Discrete (tokens)   | Rule verification         | GRPO           |
 | Ch 10: Agentic RL     | Text + tool trajectories | Tool calls / tokens | Outcome + process rewards | PPO/GRPO       |
 | Ch 11: VLM RL         | Image + tokens           | Discrete (tokens)   | Rules + model + grounding | GRPO           |
 
-The core ideas remain the same throughout — the policy gradient theorem (Chapter 5), Actor-Critic architecture (Chapter 5), PPO's clipping stability (Chapter 6), GRPO's within-group advantage (Chapter 8). What changes is the input modality, the action space, and the reward source. This is why earlier chapters spent considerable time building theoretical foundations — these foundations apply fully in multimodal settings.
+The core ideas remain the same throughout — the policy gradient theorem (Chapter 5), Actor-Critic architecture (Chapter 6), PPO's clipping stability (Chapter 7), GRPO's within-group advantage (Chapter 9). What changes is the input modality, the action space, and the reward source. This is why earlier chapters spent considerable time building theoretical foundations — these foundations apply fully in multimodal settings.
 
 <details>
 <summary>Exercise: If you replaced the VLM's input from static images to video streams, which parts of GRPO code would need to change?</summary>

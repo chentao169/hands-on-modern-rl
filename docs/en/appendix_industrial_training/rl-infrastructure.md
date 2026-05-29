@@ -202,7 +202,7 @@ OpenRLHF commonly uses Ray + vLLM + DeepSpeed; veRL supports vLLM, SGLang, and H
 
 ### 1.6 The Training/Orchestration Layer: TRL as a Single-Machine Research Prototype
 
-TRL (Transformer Reinforcement Learning) is an RL training library within the HuggingFace ecosystem [^trl]. The DPO (Chapter 2) and GRPO (Chapter 8) experiments in earlier chapters all use TRL. Its positioning differs from the three frameworks above: TRL is not a distributed orchestration system — it does not do Ray scheduling, does not separate rollout engine and trainer into separate processes, and does not handle cross-GPU weight sync. It wraps DPO/PPO/GRPO/REINFORCE++ training loops into `DPOTrainer`, `GRPOTrainer`, and other Trainer classes that run on a single machine or a small number of GPUs [^trl].
+TRL (Transformer Reinforcement Learning) is an RL training library within the HuggingFace ecosystem [^trl]. The DPO (Chapter 2) and GRPO (Chapter 9) experiments in earlier chapters all use TRL. Its positioning differs from the three frameworks above: TRL is not a distributed orchestration system — it does not do Ray scheduling, does not separate rollout engine and trainer into separate processes, and does not handle cross-GPU weight sync. It wraps DPO/PPO/GRPO/REINFORCE++ training loops into `DPOTrainer`, `GRPOTrainer`, and other Trainer classes that run on a single machine or a small number of GPUs [^trl].
 
 This means TRL's internal data flow is much simpler than OpenRLHF/veRL/slime:
 

@@ -15,7 +15,7 @@
 
 下面让我们逐章复习这些内容。
 
-## 第 7 章：RLHF 完整流水线——从理论到工程
+## 第 8 章：RLHF 完整流水线——从理论到工程
 
 ### 奖励函数设计
 
@@ -33,7 +33,7 @@ $$R_{\text{total}} = R_{\text{RM}} + \alpha R_{\text{format}} + \beta R_{\text{l
 
 RLAIF 用更强大的模型来替代人类做偏好标注。Constitutional AI 让模型自己对生成的回答做批评和修订，形成数据闭环：部署模型 → 收集用户反馈 → 识别薄弱环节 → 用 AI 构造偏好数据 → 重新训练。
 
-## 第 8 章：对齐与推理强化（DPO + GRPO + RLVR）
+## 第 9 章：对齐与推理强化（DPO + GRPO + RLVR）
 
 ### 从 RLHF 到 DPO：一个关键的数学等价
 
@@ -73,7 +73,7 @@ $$A_i = \frac{r_i - \text{mean}(r_1, \ldots, r_k)}{\text{std}(r_1, \ldots, r_k)}
 
 GRPO/DAPO 不再依赖 RM——只要有一个能打分的东西就行。在数学推理、代码生成等客观任务中，这个打分者可以是一个规则验证器：数学题直接比对最终答案，代码题跑一遍单元测试。DeepSeek-R1-Zero 的实验证明，一个基础模型不加任何 SFT，只用 RLVR 训练，就能涌现出 chain-of-thought 推理能力。
 
-## 第 9 章：Agentic RL——让模型学会使用工具
+## 第 10 章：Agentic RL——让模型学会使用工具
 
 ### 多轮交互与信用分配
 

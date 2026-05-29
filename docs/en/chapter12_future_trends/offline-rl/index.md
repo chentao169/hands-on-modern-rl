@@ -423,7 +423,7 @@ A practical recommendation: if you just want a reliable baseline, first run BC, 
 
 ## Connection to DPO and LLM Post-Training
 
-DPO from Chapter 8 also uses a fixed dataset without generating new answers online, so it can be broadly viewed as a form of offline policy optimization[^dpo]. However, it still has important differences from traditional Offline RL.
+DPO from Chapter 9 also uses a fixed dataset without generating new answers online, so it can be broadly viewed as a form of offline policy optimization[^dpo]. However, it still has important differences from traditional Offline RL.
 
 Traditional Offline RL data typically looks like:
 
@@ -549,12 +549,12 @@ The commonality is: both update policies on fixed data, and both must prevent th
 | ----------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | DQN experience replay (Chapter 4)         | Offline RL's dataset = "a replay buffer that no longer grows"                                            |
 | PPO's KL constraint (Chapter 7)           | Offline RL's behavior constraints (BCQ/TD3+BC) are essentially "don't stray too far from the old policy" |
-| DPO's reference model (Chapter 8)         | The reference model plays the same role as the behavior constraint in BCQ/TD3+BC                         |
-| GRPO's within-group advantage (Chapter 8) | IQL's advantage-weighted BC shares the same philosophy as GRPO's advantage computation                   |
-| RLVR's rule verification (Chapter 8)      | Offline RL's reward signal can only come from existing data; no online verification                      |
+| DPO's reference model (Chapter 9)         | The reference model plays the same role as the behavior constraint in BCQ/TD3+BC                         |
+| GRPO's within-group advantage (Chapter 9) | IQL's advantage-weighted BC shares the same philosophy as GRPO's advantage computation                   |
+| RLVR's rule verification (Chapter 9)      | Offline RL's reward signal can only come from existing data; no online verification                      |
 | Self-play's opponent pool (Section 12.3)  | Offline RL's dataset = trajectories produced by historical policies, same source as opponent pool data   |
 
-Perhaps the deepest connection is: **DPO is the LLM version of Offline RL.** DPO optimizes a language model policy with a fixed preference dataset without online sampling. Its reference model plays the same role as the behavior constraint in BCQ/TD3+BC -- preventing the policy from drifting beyond the training distribution. Meanwhile, IQL's advantage-weighted behavior cloning shares the same philosophy as Chapter 8's GRPO: both "pick out better-than-average actions" from existing data to optimize policy, except GRPO's data comes from the current policy's online sampling while IQL's data comes from fixed historical trajectories.
+Perhaps the deepest connection is: **DPO is the LLM version of Offline RL.** DPO optimizes a language model policy with a fixed preference dataset without online sampling. Its reference model plays the same role as the behavior constraint in BCQ/TD3+BC -- preventing the policy from drifting beyond the training distribution. Meanwhile, IQL's advantage-weighted behavior cloning shares the same philosophy as Chapter 9's GRPO: both "pick out better-than-average actions" from existing data to optimize policy, except GRPO's data comes from the current policy's online sampling while IQL's data comes from fixed historical trajectories.
 
 From this perspective, this book's RL content forms a clear spectrum: **fully online (PPO) -> semi-online (GRPO/Iterative DPO) -> fully offline (CQL/IQL/DPO)**. The closer to the offline end, the safer and more conservative the policy updates, but also the more constrained by data quality. The closer to the online end, the stronger the exploration capability, but also the more engineering investment and safety assurance required.
 

@@ -1583,9 +1583,9 @@ The minimal implementation above can verify that the whole training flow works. 
 
 Reward design for Deep Research Agents is a synthesis of the RL methods discussed throughout the book:
 
-- **RLVR (Chapter 8)**: many Deep Research rewards are verifiable. Whether a citation URL is accessible, whether code passes tests, and whether the answer matches the gold answer are all objectively verifiable and do not require a Reward Model.
-- **GRPO (Chapter 8)**: projects such as DeepResearcher use group sampling and relative comparison for training, exactly the idea of GRPO.
-- **PPO (Chapter 6)**: some projects still use PPO as the base RL algorithm, especially when a value function is needed for step-level credit assignment.
+- **RLVR (Chapter 9)**: many Deep Research rewards are verifiable. Whether a citation URL is accessible, whether code passes tests, and whether the answer matches the gold answer are all objectively verifiable and do not require a Reward Model.
+- **GRPO (Chapter 9)**: projects such as DeepResearcher use group sampling and relative comparison for training, exactly the idea of GRPO.
+- **PPO (Chapter 7)**: some projects still use PPO as the base RL algorithm, especially when a value function is needed for step-level credit assignment.
 - **PRM vs ORM (Section 10.1)**: CaRR, Atom-Searcher, and Web-Shepherd are all, in essence, exploring the trade-off between ORM, which scores only the final result, and PRM, which evaluates each step, in the Deep Research setting. The research finding is that for long-horizon research tasks, dense signals from PRMs are crucial.
 
 Deep Research Agent is an excellent setting that ties together all the RL knowledge in this book: from basic reward design to advanced credit assignment, from data synthesis to engineering implementation.

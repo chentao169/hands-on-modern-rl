@@ -419,7 +419,7 @@ $$
 
 ## 与 DPO 和 LLM 后训练的关系
 
-第 8 章的 DPO 也使用固定数据集，不需要在线生成新回答，因此可以从广义上看成一种离线策略优化[^dpo]。不过它和传统 Offline RL 仍有重要差别。
+第 9 章的 DPO 也使用固定数据集，不需要在线生成新回答，因此可以从广义上看成一种离线策略优化[^dpo]。不过它和传统 Offline RL 仍有重要差别。
 
 传统 Offline RL 的数据通常是：
 
@@ -545,12 +545,12 @@ Offline RL 提供的是一种从历史数据中学习决策策略的框架，但
 | --------------------------------- | ----------------------------------------------------------------- |
 | DQN 经验回放（第 4 章）           | 离线 RL 的数据集 = "一个不再增长的 replay buffer"                 |
 | PPO 的 KL 约束（第 7 章）         | 离线 RL 的行为约束（BCQ/TD3+BC）本质也是"不要离旧策略太远"        |
-| DPO 的 reference model（第 8 章） | reference model 扮演了和 BCQ/TD3+BC 中行为约束相同的角色          |
-| GRPO 的组内 advantage（第 8 章）  | IQL 的 advantage-weighted BC 与 GRPO 的 advantage 计算异曲同工    |
-| RLVR 的规则验证（第 8 章）        | 离线 RL 的 reward 信号只能来自已有数据，不能在线验证              |
+| DPO 的 reference model（第 9 章） | reference model 扮演了和 BCQ/TD3+BC 中行为约束相同的角色          |
+| GRPO 的组内 advantage（第 9 章）  | IQL 的 advantage-weighted BC 与 GRPO 的 advantage 计算异曲同工    |
+| RLVR 的规则验证（第 9 章）        | 离线 RL 的 reward 信号只能来自已有数据，不能在线验证              |
 | 自博弈的对手池（12.3 节）         | 离线 RL 的数据集 = 历史策略产生的轨迹，和对手池中的旧策略数据同源 |
 
-最深刻的联系可能是：**DPO 就是 LLM 版本的离线 RL**。DPO 用固定偏好数据集优化语言模型策略，不需要在线采样。它的 reference model 扮演了和 BCQ/TD3+BC 中行为约束相同的角色——防止策略跑出训练分布。而 IQL 的 advantage-weighted behavior cloning 则和第 8 章的 GRPO 异曲同工：都是在已有数据中"挑出比平均更好的动作"来优化策略，只是 GRPO 的数据来自当前策略的在线采样，IQL 的数据来自固定的历史轨迹。
+最深刻的联系可能是：**DPO 就是 LLM 版本的离线 RL**。DPO 用固定偏好数据集优化语言模型策略，不需要在线采样。它的 reference model 扮演了和 BCQ/TD3+BC 中行为约束相同的角色——防止策略跑出训练分布。而 IQL 的 advantage-weighted behavior cloning 则和第 9 章的 GRPO 异曲同工：都是在已有数据中"挑出比平均更好的动作"来优化策略，只是 GRPO 的数据来自当前策略的在线采样，IQL 的数据来自固定的历史轨迹。
 
 从这个角度看，本书的 RL 内容形成了一条清晰的谱系：**完全在线（PPO）→ 半在线（GRPO/Iterative DPO）→ 完全离线（CQL/IQL/DPO）**。越靠近离线端，策略更新越安全、越保守，但也越受限于数据质量。越靠近在线端，探索能力越强，但也越需要工程投入和安全保障。
 

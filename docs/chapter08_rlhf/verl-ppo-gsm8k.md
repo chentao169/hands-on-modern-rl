@@ -2,7 +2,7 @@
 
 8.5 节我们讲了 PPO-RLHF 的四模型协作原理——Actor、Reference、Reward Model、Critic 各自的角色，以及 KL 惩罚、token-level reward、advantage 估计的数学关系。这一节我们换一个姿势：用工业级框架 [veRL](https://github.com/volcengine/verl)，在 GSM8K 数学推理数据集上跑通 PPO 训练。
 
-手写伪代码帮你理解原理；veRL 帮你跑真实验。两者的关系类似第 6 章手写 Actor-Critic 和用 Stable Baselines3 跑 PPO——算法一样，但框架帮你处理了分布式调度、显存优化、推理加速等工程细节。
+手写伪代码帮你理解原理；veRL 帮你跑真实验。两者的关系类似第 7 章用 Stable Baselines3 跑 PPO——算法一样，但框架帮你处理了分布式调度、显存优化、推理加速等工程细节。
 
 ## veRL 简介
 

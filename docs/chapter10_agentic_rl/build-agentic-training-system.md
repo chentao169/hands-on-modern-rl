@@ -820,7 +820,7 @@ history = trainer.fit(prompts, n_steps=30)
 
 ## 扩展练习
 
-1. **加 PPO clipping**：在 `train_step_with_advantage()` 中加入 PPO 的 clipped surrogate objective（参考第 6 章），对比 REINFORCE 和 PPO 的训练稳定性
+1. **加 PPO clipping**：在 `train_step_with_advantage()` 中加入 PPO 的 clipped surrogate objective（参考第 7 章），对比 REINFORCE 和 PPO 的训练稳定性
 2. **加 loss mask**：在 `_serialize_trajectory()` 中标记哪些 token 是模型生成的、哪些是环境返回的，只在模型生成的 token 上计算 loss
 3. **加更多工具**：在 `SandboxEnv` 中加入搜索工具（mock 版本即可），让模型学会在代码执行和搜索之间做选择
 4. **异步 rollout**：用 `multiprocessing` 把 rollout 和 train 拆到不同进程，用 `Queue` 传递轨迹数据，观察 GPU 利用率的变化

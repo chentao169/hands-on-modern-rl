@@ -4,7 +4,7 @@ title: 10. Agentic RL
 
 # Chapter 10: Agentic RL: Tool Use, Multi-Turn Interaction, and Agent Training
 
-From DQN in Chapter 4 to GRPO in Chapter 8, the RL problems we have studied so far have mostly been "single-turn" problems: the model receives one prompt, produces one complete answer, a reward model assigns a score, and the policy is updated. This paradigm has proved extremely effective in the last two years. ChatGPT, Claude, and DeepSeek all rely on this family of methods for alignment and post-training.
+From DQN in Chapter 4 to GRPO in Chapter 9, the RL problems we have studied so far have mostly been "single-turn" problems: the model receives one prompt, produces one complete answer, a reward model assigns a score, and the policy is updated. This paradigm has proved extremely effective in the last two years. ChatGPT, Claude, and DeepSeek all rely on this family of methods for alignment and post-training.
 
 Real agents, however, do not operate this way. When a user asks an agent, "Check tomorrow's weather in Beijing, then plan an itinerary based on the weather," the agent must first call a search or weather tool, read the returned information, decide whether more queries are needed, and finally integrate all information into a plan. This is a **multi-step, multi-tool, multi-turn interaction**. The previous single-turn RL paradigm no longer fits directly, because we usually cannot assign a clear reward at every intermediate step. The intermediate steps are not simply "right" or "wrong"; only the final result tells us whether the whole decision path worked.
 

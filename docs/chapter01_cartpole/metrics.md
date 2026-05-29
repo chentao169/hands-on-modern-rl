@@ -704,14 +704,14 @@ graph TD
     VB --> DQN["DQN（第 4 章）"]
     PB --> PG["REINFORCE（第 5 章）"]
 
-    DQN --> AC["Actor-Critic 汇合（第 5 章末）"]
+    DQN --> AC["Actor-Critic（第 6 章）"]
     PG --> AC
 
-    AC --> PPO["PPO（第 6 章）<br/>← 你刚用的就是这个"]
+    AC --> PPO["PPO（第 7 章）<br/>← 你刚用的就是这个"]
 
     PPO --> LLM["LLM 对齐"]
-    LLM --> DPOG["DPO（第 8 章）<br/>← 第 2 章要用的"]
-    LLM --> GRPOG["GRPO（第 8 章）"]
+    LLM --> DPOG["DPO（第 2 章）<br/>← 第 2 章要用的"]
+    LLM --> GRPOG["GRPO（第 9 章）"]
 
     style ROOT fill:#f8f9fa,stroke:#24292f,color:#24292f
     style VB fill:#e3f2fd,stroke:#1976d2,color:#000

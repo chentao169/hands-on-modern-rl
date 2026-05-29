@@ -703,14 +703,14 @@ graph TD
     VB --> DQN["DQN (Chapter 4)"]
     PB --> PG["REINFORCE (Chapter 5)"]
 
-    DQN --> AC["Actor-Critic Convergence (end of Chapter 5)"]
+    DQN --> AC["Actor-Critic (Chapter 6)"]
     PG --> AC
 
-    AC --> PPO["PPO (Chapter 6)<br/><-- You just used this"]
+    AC --> PPO["PPO (Chapter 7)<br/><-- You just used this"]
 
     PPO --> LLM["LLM Alignment"]
-    LLM --> DPOG["DPO (Chapter 8)<br/><-- What Chapter 2 uses"]
-    LLM --> GRPOG["GRPO (Chapter 8)"]
+    LLM --> DPOG["DPO (Chapter 2)<br/><-- What Chapter 2 uses"]
+    LLM --> GRPOG["GRPO (Chapter 9)"]
 
     style ROOT fill:#f8f9fa,stroke:#24292f,color:#24292f
     style VB fill:#e3f2fd,stroke:#1976d2,color:#000

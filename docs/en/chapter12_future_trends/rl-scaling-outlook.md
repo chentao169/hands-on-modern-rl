@@ -149,7 +149,7 @@ print("  Base model can be directly aligned with RLMT, overturning traditional t
 
 ### RLMT's Connection to Previous Chapters
 
-RLMT stands at the intersection of Chapter 8 RLVR and Chapter 7 RLHF:
+RLMT stands at the intersection of Chapter 9 RLVR and Chapter 7 RLHF:
 
 | Concept Source                       | Role in RLMT                                         |
 | ------------------------------------ | ---------------------------------------------------- |

@@ -409,7 +409,7 @@ The elegant part is that **SWE-smith data naturally fits RLVR**. No reward model
 
 SWE-smith represents an important direction in agent data engineering: **use algorithms to manufacture training data instead of relying on expensive manual labeling**. Its core pipeline, "inject bug, run tests, filter valid cases, generate issue," is simple, scalable, and applicable to any Python repository with tests.
 
-The approach aligns naturally with RLVR from Chapter 8. Each manufactured task has a clear verifier, so test pass/fail can be used directly as the RL reward without training an additional reward model.
+The approach aligns naturally with RLVR from Chapter 9. Each manufactured task has a clear verifier, so test pass/fail can be used directly as the RL reward without training an additional reward model.
 
 The broader principle is: **find the automatic verifier in the domain, then build a data manufacturing pipeline around it**.
 

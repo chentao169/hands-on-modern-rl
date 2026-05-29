@@ -108,7 +108,7 @@ The disadvantage of PRM is that the **labeling cost is extremely high**. You nee
 | Labeling cost       | Low, outcome only                       | High, every step must be labeled          |
 | Learning speed      | Slow, little signal and high variance   | Fast, more signal and lower variance      |
 | Best suited for     | Verifiable tasks, such as code and math | Complex reasoning requiring fine guidance |
-| Representative work | GRPO, Chapter 8                         | Math-Shepherd[^mathshepherd], PRS         |
+| Representative work | GRPO, Chapter 9                         | Math-Shepherd[^mathshepherd], PRS         |
 
 ### SALT: A Third Path Between ORM and PRM[^salt]
 
@@ -181,7 +181,7 @@ This example illustrates PRM's core advantage: it can distinguish "success by lu
 <details>
 <summary>Thinking exercise: why is credit assignment in multi-turn RL harder than token-level credit assignment in single-turn RL?</summary>
 
-In single-turn RL, such as PPO in Chapter 6, the contribution of each token is not easy to quantify, but at least two helpful conditions hold: (1) tokens are homogeneous, because they are all the same type of action, namely text generation; (2) the influence between tokens is relatively local, because the third token usually affects the hundredth token only indirectly.
+In single-turn RL, such as PPO in Chapter 7, the contribution of each token is not easy to quantify, but at least two helpful conditions hold: (1) tokens are homogeneous, because they are all the same type of action, namely text generation; (2) the influence between tokens is relatively local, because the third token usually affects the hundredth token only indirectly.
 
 In multi-turn RL, neither helpful condition holds. (1) Actions are heterogeneous: "call a search tool" and "generate a paragraph of text" are completely different action types. (2) Influence is global: the search result in turn 1 determines the input for all subsequent turns, so the chain of influence is longer and more complex.
 
@@ -454,7 +454,7 @@ The core idea of this reward design is: **encourage verification and correction,
 
 ## Connection to Previous Chapters
 
-The credit assignment problem in multi-turn RL is a direct continuation of the policy gradient theorem from Chapter 5. REINFORCE uses Monte Carlo sampling to estimate $G_t$, the cumulative return from the current step to the end. Multi-turn RL does the same thing, except that a "step" changes from a single token to a complete turn. PPO in Chapter 6 reduces variance by introducing a value function, the Critic. The same idea still applies in multi-turn RL, except the Critic needs to evaluate not "the value of the current token," but "the value of the current turn."
+The credit assignment problem in multi-turn RL is a direct continuation of the policy gradient theorem from Chapter 5. REINFORCE uses Monte Carlo sampling to estimate $G_t$, the cumulative return from the current step to the end. Multi-turn RL does the same thing, except that a "step" changes from a single token to a complete turn. PPO in Chapter 7 reduces variance by introducing a value function, the Critic. The same idea still applies in multi-turn RL, except the Critic needs to evaluate not "the value of the current token," but "the value of the current turn."
 
 Planning capability is an **advanced form** of multi-turn RL. Credit assignment solves "how well each step did"; planning solves "which overall path is best." Together, they form the decision core of Agentic RL.
 

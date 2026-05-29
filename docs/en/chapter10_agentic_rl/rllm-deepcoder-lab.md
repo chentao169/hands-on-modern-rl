@@ -484,7 +484,7 @@ Test case 3: Expected "-3", got "-1"  FAIL
 Test failure -> reward = 0.0, is_correct = False
 ```
 
-The reward only takes values 0 and 1—no intermediate states. This is the **RLVR (Reinforcement Learning with Verifiable Rewards)** discussed in Chapter 8: code is either correct or incorrect; no Reward Model guesswork needed.
+The reward only takes values 0 and 1—no intermediate states. This is the **RLVR (Reinforcement Learning with Verifiable Rewards)** discussed in Chapter 9: code is either correct or incorrect; no Reward Model guesswork needed.
 
 ## Step 4: Run Baseline Evaluation—How Strong Is the Model Before Training?
 
@@ -695,7 +695,7 @@ rllm train deepcoder \
 
 ### What Happens During Training?
 
-GRPO's training loop (corresponds to the algorithm in Chapter 8):
+GRPO's training loop (corresponds to the algorithm in Chapter 9):
 
 ```text
 For each problem:

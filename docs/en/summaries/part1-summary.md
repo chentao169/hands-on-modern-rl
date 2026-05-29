@@ -89,7 +89,7 @@ mean_reward, std_reward = evaluate_policy(model, env, n_eval_episodes=10)
 print(f"Mean reward: {mean_reward:.2f} +/- {std_reward:.2f}")
 ```
 
-Here we used PPO, the most widely used policy-gradient method in practice. Its key idea is developed in detail in Chapter 6. For now, the only point you need is: PPO adds a **clipping mechanism** on top of policy gradients to prevent updates that are too large, which can cause training to collapse.
+Here we used PPO, the most widely used policy-gradient method in practice. Its key idea is developed in detail in Chapter 7. For now, the only point you need is: PPO adds a **clipping mechanism** on top of policy gradients to prevent updates that are too large, which can cause training to collapse.
 
 ## Chapter 2: DPO - Teaching an LLM to "Speak Well"
 
